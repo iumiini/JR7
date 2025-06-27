@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR7校正治具操作流程</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #e1f5fe;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .controls h4 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        
+        .control-group {
+            margin: 15px 0;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .mode-toggle {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin: 0 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .mode-toggle.inactive {
+            background: #6c757d;
+        }
+        
+        .mode-toggle:hover {
+            transform: scale(1.05);
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .flow-diagram {
+            flex: 2;
+            min-width: 600px;
+        }
+        
+        .flow-steps {
+            flex: 1;
+            min-width: 500px;
+        }
+        
+        .diagram-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            position: relative;
+            height: 500px;
+        }
+        
+        .pc-side, .device-side {
+            width: 280px;
+            background: #e6f3ff;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            height: 450px;
+        }
+        
+        .device-side {
+            background: #fff2e6;
+            border-color: #ff7f00;
+        }
+        
+        .device-controls {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .device-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            min-width: 80px;
+            animation: breathe 2s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(40, 167, 69, 0.8);
+                transform: scale(1.02);
+            }
+        }
+        
+        .device-button:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+        
+        .device-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .external-controls {
+            position: absolute;
+            bottom: -80px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .status-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            margin: 2px;
+            transition: all 0.3s;
+        }
+        
+        .status-button.inactive {
+            background: #dc3545;
+        }
+        
+        .connection {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .usb-port {
+            background: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        
+        .arrow {
+            font-size: 24px;
+            color: #007bff;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .data-flow {
+            position: absolute;
+            top: 70%;
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            opacity: 0;
+            transition: all 0.5s;
+            white-space: nowrap;
+        }
+        
+        .data-flow.device-to-pc {
+            left: 80%;
+            animation: dataToPC 2s ease-in-out;
+        }
+        
+        .data-flow.pc-to-device {
+            left: 20%;
+            animation: dataToDEVICE 2s ease-in-out;
+        }
+        
+        .data-flow.notify-pc {
+            left: 80%;
+            animation: dataToPC 2s ease-in-out;
+        }
+        
+        @keyframes dataToPC {
+            0% { 
+                left: 80%; 
+                opacity: 1;
+            }
+            100% { 
+                left: 20%; 
+                opacity: 1;
+            }
+        }
+        
+        @keyframes dataToDEVICE {
+            0% { left: 20%; opacity: 1; }
+            100% { left: 80%; opacity: 1; }
+        }
+        
+        @keyframes dataToPC {
+            0% { 
+                left: 80%; 
+                opacity: 1;
+            }
+            100% { 
+                left: 20%; 
+                opacity: 1;
+            }
+        }
+        
+        .status-display {
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .flow-steps {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .flow-steps h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        
+        .steps-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .steps-column {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .column-title {
+            text-align: center;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .step-item {
+            padding: 10px 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #e9ecef;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            font-size: 13px;
+            position: relative;
+        }
+        
+        .step-item.active {
+            background: #28a745;
+            color: white;
+            border-left-color: #155724;
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+            animation: activeStep 0.5s ease-in-out;
+        }
+        
+        .step-item.completed {
+            background: #6c757d;
+            color: white;
+            border-left-color: #495057;
+        }
+        
+        .step-item.pending {
+            background: #f8f9fa;
+            color: #6c757d;
+            border-left-color: #e9ecef;
+        }
+        
+        .step-arrow {
+            text-align: center;
+            font-size: 16px;
+            color: #007bff;
+            margin: 8px 0;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-3px); }
+            60% { transform: translateY(-2px); }
+        }
+        
+        @keyframes activeStep {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1.02); }
+        }
+        
+        .highlight {
+            animation: highlight 1s ease-in-out;
+        }
+        
+        @keyframes highlight {
+            0%, 100% { 
+                border-color: inherit;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+            50% { 
+                border-color: #ffc107;
+                box-shadow: 0 8px 16px rgba(255, 193, 7, 0.4);
+                transform: scale(1.02);
+            }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+        
+        .step-number {
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .step-item.active .step-number {
+            background: #155724;
+        }
+        
+        .step-item.completed .step-number {
+            background: #495057;
+        }
+        
+        .step-item.pending .step-number {
+            background: #adb5bd;
+        }
+        
+        .current-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #155724;
+        }
+        
+        .current-info strong {
+            font-size: 16px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .prerequisite-check {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">JR7校正治具操作流程動畫<br><small style="font-size: 18px; color: #666;">JR7校正治具操作フロー動画</small></h1>
+        
+        <div class="controls">
+            <h4>🎮 演示設定<br><small style="font-size: 12px; color: #666;">デモ設定</small></h4>
+            
+            <div class="control-group">
+                <label>演示模式 / デモモード</label>
+                <button class="mode-toggle" onclick="setAutoMode()" id="autoModeBtn">自動演示模式<br><small>自動デモモード</small></button>
+                <button class="mode-toggle inactive" onclick="setManualMode()" id="manualModeBtn">手動演示模式<br><small>手動デモモード</small></button>
+            </div>
+            
+            <div class="control-group">
+                <label>演示情境 / デモシナリオ</label>
+                <button class="mode-toggle" onclick="setNormalTest()" id="normalTestBtn">測試正常<br><small>テスト正常</small></button>
+                <button class="mode-toggle inactive" onclick="setAbnormalTest()" id="abnormalTestBtn">測試異常<br><small>テスト異常</small></button>
+            </div>
+            
+            <div class="control-group">
+                <label>流程控制 / フロー制御</label>
+                <button onclick="nextStep()" id="nextStepBtn" style="display: none;">下一步<br><small>次のステップ</small></button>
+                <button onclick="stopAnimation()">停止<br><small>停止</small></button>
+                <button onclick="reset()">重置<br><small>リセット</small></button>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 14px; color: #666;">
+                <strong>使用說明：</strong><span id="modeInstruction">選擇演示模式後，按下治具上的 CALI. 或 TEST 按鍵開始自動演示</span>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="current-info" id="currentInfo">
+            <strong>當前狀態：</strong><span id="currentStatus">準備開始</span>
+        </div>
+        
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+        
+        <div class="main-content">
+            <div class="flow-diagram">
+                <div class="diagram-area">
+                    <div class="pc-side" id="pcSide">
+                        <h3>📱 PC端</h3>
+                        <div><strong>系統:</strong> Windows 11</div>
+                        <div><strong>連接:</strong> USB接埠</div>
+                        <div><strong>功能:</strong></div>
+                        <ul>
+                            <li>Serial通訊 (Command發送)</li>
+                            <li>Serial通訊 (Data接收)</li>
+                            <li>資料儲存 .csv 格式</li>
+                        </ul>
+                        <div id="pcStatus" class="status-display">等待連接...</div>
+                    </div>
+                    
+                    <div class="connection">
+                        <span class="arrow">⬅</span>
+                        <div class="usb-port">USB Port</div>
+                        <span class="arrow">➡</span>
+                        <div class="data-flow" id="dataFlow"></div>
+                    </div>
+                    
+                    <div class="device-side" id="deviceSide">
+                        <h3>🔧 JR7校正治具</h3>
+                        <div><strong>系統 / システム:</strong> STM32F407</div>
+                        <div><strong>連接 / 接続:</strong> USART Port</div>
+                        <div><strong>功能 / 機能:</strong></div>
+                        <ul>
+                            <li>Serial通訊 (Command接收)<br><small>シリアル通信（コマンド受信）</small></li>
+                            <li>Serial通訊 (Data裝置)<br><small>シリアル通信（データ送信）</small></li>
+                            <li>校正治具操作<br><small>校正治具操作</small></li>
+                        </ul>
+                        
+                        <div class="prerequisite-check">
+                            <div>前置條件檢查 / 前提条件チェック：</div>
+                            <div>✅ QR CODE: <span id="qrStatus">已掃描</span></div>
+                            <div>✅ PC連線 / PC接続: <span id="pcConnStatus">正常</span></div>
+                        </div>
+                        
+                        <div class="device-controls">
+                            <button class="device-button" onclick="startCalibration()" id="caliBtn">CALI.</button>
+                            <button class="device-button" onclick="startTest()" id="testBtn">TEST</button>
+                        </div>
+                        
+                        <div id="deviceStatus" class="status-display">待機中... / 待機中...</div>
+                        
+                        <div class="external-controls">
+                            <div>外部狀態控制 / 外部状態制御</div>
+                            <button class="status-button" onclick="toggleQR()" id="qrButton">已掃描QR CODE</button>
+                            <button class="status-button" onclick="togglePC()" id="pcButton">PC端連線正常</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flow-steps">
+                <h3>📋 完整操作流程<br><small style="font-size: 14px; color: #666;">完全操作フロー</small></h3>
+                <div class="steps-container">
+                    <div class="steps-column">
+                        <div class="column-title">校正流程 (CALI.)<br><small>校正フロー (CALI.)</small></div>
+                        <div class="step-item pending" id="step0">
+                            <span class="step-number">0</span>按下「CALI.」按鍵<br><small>「CALI.」ボタンを押下</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step1">
+                            <span class="step-number">1</span>開始校正模式<br><small>校正モード開始</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step2">
+                            <span class="step-number">2</span>校正中...<br><small>校正中...</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step3">
+                            <span class="step-number">3</span>校正結束判定結果<br><small>校正終了結果判定</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step4">
+                            <span class="step-number">4</span>結束校正模式進入降溫模式<br><small>校正モード終了、冷却モード開始</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                    </div>
+                    
+                    <div class="steps-column">
+                        <div class="column-title">測試流程 (TEST / 接續)<br><small>テストフロー (TEST / 継続)</small></div>
+                        <div class="step-item pending" id="step5">
+                            <span class="step-number">5</span>測試模式中...<br><small>テストモード中...</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step6">
+                            <span class="step-number">6</span>測試模式結束<br><small>テストモード終了</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step7">
+                            <span class="step-number">7</span>將校正與測試結果存入SD卡<br><small>校正・テスト結果をSDカードに保存</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step7-1" style="display: none;">
+                            <span class="step-number">7-1</span>❌ 測試結果NG<br><small>請選擇 START(重新校正) 或 END(結束流程)</small><br><small style="color: #888;">START（再校正）またはEND（終了）を選択</small>
+                        </div>
+                        <div class="step-arrow" id="arrow7-1" style="display: none;">↓</div>
+                        <div class="step-item pending" id="step8">
+                            <span class="step-number">8</span>🔥 將資料傳送到PC端<br><small>データをPC側に送信</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step9">
+                            <span class="step-number">9</span>PC端顯示接收完成<br><small>PC側受信完了表示</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step10">
+                            <span class="step-number">10</span>PC端回傳確認碼<br><small>PC側確認コード返信</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step11">
+                            <span class="step-number">11</span>🏁 結束流程<br><small>フロー終了</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = -1;
+        let autoMode = true;
+        let manualMode = false;
+        let animationTimer = null;
+        let qrScanned = true;
+        let pcConnected = true;
+        let testNormal = true; // 預設測試正常
+        let fromAbnormalPath = false; // 記錄是否來自異常路徑
+        
+        const steps = [
+            { device: "按下CALI.按鍵", pc: "連線正常", status: "用戶按下治具上的CALI.按鍵<br><small>ユーザーが治具のCALI.ボタンを押下</small>" },
+            { device: "開始校正模式", pc: "連線正常", status: "治具進入校正模式，建立通訊連接<br><small>治具が校正モードに入り、通信接続を確立</small>" },
+            { device: "校正中...", pc: "連線正常", status: "治具正在執行校正程序<br><small>治具が校正プロセスを実行中</small>" },
+            { device: "校正結束判定結果", pc: "連線正常", status: "校正完成，系統判定校正結果<br><small>校正完了、システムが校正結果を判定</small>" },
+            { device: "進入降溫模式", pc: "連線正常", status: "治具進入降溫階段，等待溫度穩定<br><small>治具が冷却段階に入り、温度安定を待機</small>" },
+            { device: "測試模式中...", pc: "預備接收資料", status: "開始執行測試程序，通知PC準備接收<br><small>テストプロセス開始、PC側に受信準備を通知</small>" },
+            { device: "測試模式結束", pc: "預備接收資料", status: "測試完成，準備存儲數據<br><small>テスト完了、データ保存準備</small>" },
+            { device: "💾 存入SD卡", pc: "預備接收資料", status: "將校正與測試結果存入SD卡<br><small>校正・テスト結果をSDカードに保存</small>" },
+            { device: "🔄 傳送數據到PC", pc: "🔄 接收數據中...", status: "治具向PC端傳送校正和測試數據<br><small>治具がPC側に校正・テストデータを送信</small>" },
+            { device: "等待確認", pc: "✅接收完成！", status: "PC端接收數據完成，準備回傳確認<br><small>PC側データ受信完了、確認返信準備</small>" },
+            { device: "✅ 收到確認碼", pc: "📤 回傳確認碼", status: "PC端回傳確認碼，治具確認接收<br><small>PC側確認コード返信、治具が受信確認</small>" },
+            { device: "🏁 流程完成", pc: "💾 數據已儲存", status: "整個校正流程完成，數據已安全儲存<br><small>全校正フロー完了、データ安全保存済み</small>" }
+        ];
+        
+        const step7_1 = { device: "❌ 測試結果NG - 請選擇操作", pc: "等待用戶選擇", status: "測試結果異常，請選擇重新校正(START)或結束流程(END)<br><small>テスト結果異常、再校正(START)または終了(END)を選択</small>" };
+        
+        function checkPrerequisites() {
+            return qrScanned && pcConnected;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        function updatePrerequisiteDisplay() {
+            document.getElementById('qrStatus').textContent = qrScanned ? '已掃描' : '未掃描';
+            document.getElementById('pcConnStatus').textContent = pcConnected ? '正常' : '異常';
+            
+            const qrDiv = document.getElementById('qrStatus').parentElement;
+            const pcDiv = document.getElementById('pcConnStatus').parentElement;
+            
+            qrDiv.innerHTML = `${qrScanned ? '✅' : '❌'} QR CODE: <span id="qrStatus">${qrScanned ? '已掃描' : '未掃描'}</span>`;
+            pcDiv.innerHTML = `${pcConnected ? '✅' : '❌'} PC連線: <span id="pcConnStatus">${pcConnected ? '正常' : '異常'}</span>`;
+        }
+        
+        function toggleQR() {
+            qrScanned = !qrScanned;
+            const button = document.getElementById('qrButton');
+            button.textContent = qrScanned ? '已掃描QR CODE' : '未掃描QR CODE';
+            button.classList.toggle('inactive', !qrScanned);
+            updatePrerequisiteDisplay();
+        }
+        
+        function togglePC() {
+            pcConnected = !pcConnected;
+            const button = document.getElementById('pcButton');
+            button.textContent = pcConnected ? 'PC端連線正常' : 'PC端連線異常';
+            button.classList.toggle('inactive', !pcConnected);
+            updatePrerequisiteDisplay();
+        }
+        
+        function updateDisplay() {
+            const deviceStatus = document.getElementById('deviceStatus');
+            const pcStatus = document.getElementById('pcStatus');
+            const progressFill = document.getElementById('progressFill');
+            const currentStatus = document.getElementById('currentStatus');
+            
+            if (currentStep >= 0 && currentStep < steps.length) {
+                deviceStatus.textContent = steps[currentStep].device;
+                pcStatus.textContent = steps[currentStep].pc;
+                
+                // 特殊處理步驟11的狀態顯示
+                if (currentStep === 11 && fromAbnormalPath) {
+                    currentStatus.innerHTML = '結束校正與測試流程，無儲存數據<br><small>校正・テストフロー終了、データ保存なし</small>';
+                } else {
+                    currentStatus.innerHTML = steps[currentStep].status;
+                }
+                
+                // 更新進度條
+                const progress = ((currentStep + 1) / steps.length) * 100;
+                progressFill.style.width = progress + '%';
+                
+                // 更新步驟列表
+                for (let i = 0; i <= 11; i++) {
+                    const stepElement = document.getElementById(`step${i}`);
+                    if (stepElement) {
+                        stepElement.classList.remove('active', 'completed', 'pending');
+                        
+                        if (i === currentStep) {
+                            stepElement.classList.add('active');
+                        } else if (i < currentStep) {
+                            stepElement.classList.add('completed');
+                        } else {
+                            stepElement.classList.add('pending');
+                        }
+                    }
+                }
+                
+                // 檢查是否需要顯示異常步驟
+                if (currentStep === 7 && !testNormal) {
+                    // 在步驟7且測試異常時，準備顯示7-1
+                    setTimeout(() => {
+                        if (autoMode) {
+                            nextStep(); // 自動進入7-1
+                        }
+                    }, 3000);
+                }
+                
+                // 特殊效果處理
+                handleSpecialEffects();
+            }
+        }
+        
+        function handleSpecialEffects() {
+            const deviceSide = document.getElementById('deviceSide');
+            const pcSide = document.getElementById('pcSide');
+            const dataFlow = document.getElementById('dataFlow');
+            
+            // 清除之前的特效
+            deviceSide.classList.remove('highlight');
+            pcSide.classList.remove('highlight');
+            dataFlow.classList.remove('device-to-pc', 'pc-to-device', 'notify-pc');
+            dataFlow.style.opacity = '0';
+            
+            switch (currentStep) {
+                case 5: // 測試模式通知 - 治具到PC
+                    deviceSide.classList.add('highlight');
+                    dataFlow.textContent = '📢 通知預備接收資料...';
+                    dataFlow.classList.add('notify-pc');
+                    dataFlow.style.opacity = '1';
+                    setTimeout(() => {
+                        pcSide.classList.add('highlight');
+                    }, 1000);
+                    break;
+                case 8: // 資料傳送步驟 - 治具到PC
+                    deviceSide.classList.add('highlight');
+                    dataFlow.textContent = '📊 校正數據傳送中...';
+                    dataFlow.classList.add('device-to-pc');
+                    dataFlow.style.opacity = '1';
+                    setTimeout(() => {
+                        pcSide.classList.add('highlight');
+                    }, 1000);
+                    break;
+                case 9: // PC接收完成
+                    pcSide.classList.add('highlight');
+                    break;
+                case 10: // 回傳確認碼 - PC到治具
+                    pcSide.classList.add('highlight');
+                    dataFlow.textContent = '✅ 確認碼回傳中...';
+                    dataFlow.classList.add('pc-to-device');
+                    dataFlow.style.opacity = '1';
+                    setTimeout(() => {
+                        deviceSide.classList.add('highlight');
+                    }, 1000);
+                    break;
+            }
+        }
+        
+        function setAutoMode() {
+            autoMode = true;
+            manualMode = false;
+            
+            document.getElementById('autoModeBtn').classList.remove('inactive');
+            document.getElementById('manualModeBtn').classList.add('inactive');
+            document.getElementById('nextStepBtn').style.display = 'none';
+            document.getElementById('modeInstruction').textContent = '選擇演示模式後，按下治具上的 CALI. 或 TEST 按鍵開始自動演示';
+        }
+        
+        function setManualMode() {
+            autoMode = false;
+            manualMode = true;
+            
+            document.getElementById('autoModeBtn').classList.add('inactive');
+            document.getElementById('manualModeBtn').classList.remove('inactive');
+            document.getElementById('nextStepBtn').style.display = 'inline-block';
+            document.getElementById('modeInstruction').textContent = '選擇演示模式後，按下治具上的 CALI. 或 TEST 按鍵開始，然後點擊「下一步」手動控制流程';
+        }
+        
+        function switchToNormalButtons() {
+            document.getElementById('caliBtn').textContent = 'CALI.';
+            document.getElementById('testBtn').textContent = 'TEST';
+            document.getElementById('caliBtn').onclick = startCalibration;
+            document.getElementById('testBtn').onclick = startTest;
+        }
+        
+        function switchToNGButtons() {
+            document.getElementById('caliBtn').textContent = 'START';
+            document.getElementById('testBtn').textContent = 'END';
+            document.getElementById('caliBtn').onclick = restartCalibration;
+            document.getElementById('testBtn').onclick = endProcess;
+        }
+        
+        function hideAbnormalStep() {
+            document.getElementById('step7-1').style.display = 'none';
+            document.getElementById('arrow7-1').style.display = 'none';
+        }
+        
+        function showAbnormalStep() {
+            document.getElementById('step7-1').style.display = 'block';
+            document.getElementById('arrow7-1').style.display = 'block';
+        }
+        
+        function setNormalTest() {
+            testNormal = true;
+            document.getElementById('normalTestBtn').classList.remove('inactive');
+            document.getElementById('abnormalTestBtn').classList.add('inactive');
+            hideAbnormalStep();
+        }
+        
+        function setAbnormalTest() {
+            testNormal = false;
+            document.getElementById('normalTestBtn').classList.add('inactive');
+            document.getElementById('abnormalTestBtn').classList.remove('inactive');
+        }
+        
+        function restartCalibration() {
+            if (!checkPrerequisites()) {
+                showError('無法重新開始：請確認已掃描QR CODE且PC端連線正常');
+                return;
+            }
+            
+            switchToNormalButtons();
+            hideAbnormalStep();
+            fromAbnormalPath = false; // 重置異常路徑標記
+            stopAnimation();
+            currentStep = 1; // 跳到步驟1重新開始校正
+            updateDisplay();
+            
+            if (autoMode) {
+                startAutoAnimation();
+            }
+        }
+        
+        function endProcess() {
+            switchToNormalButtons();
+            hideAbnormalStep();
+            stopAnimation();
+            fromAbnormalPath = true; // 標記來自異常路徑
+            currentStep = 11; // 直接跳到結束
+            updateDisplay();
+        }
+        
+        function startAutoAnimation() {
+            if (autoMode) {
+                animationTimer = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }, 3000);
+            }
+        }
+        
+        function stopAnimation() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+            }
+        }
+        
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                // 檢查是否在步驟7且設定為測試異常
+                if (currentStep === 7 && !testNormal) {
+                    // 跳轉到步驟7-1（測試結果NG）
+                    currentStep = '7-1';
+                    updateDisplayForNG();
+                    return;
+                }
+                
+                currentStep++;
+                
+                // 如果正常流程到達步驟11，重置異常路徑標記
+                if (currentStep === 11) {
+                    fromAbnormalPath = false;
+                }
+                
+                updateDisplay();
+            }
+        }
+        
+        function updateDisplayForNG() {
+            const deviceStatus = document.getElementById('deviceStatus');
+            const pcStatus = document.getElementById('pcStatus');
+            const currentStatus = document.getElementById('currentStatus');
+            
+            deviceStatus.textContent = step7_1.device;
+            pcStatus.textContent = step7_1.pc;
+            currentStatus.innerHTML = step7_1.status;
+            
+            // 顯示異常步驟
+            showAbnormalStep();
+            
+            // 更新步驟顯示
+            document.getElementById('step7-1').classList.add('active');
+            
+            // 切換按鍵
+            switchToNGButtons();
+        }
+        
+        function reset() {
+            stopAnimation();
+            currentStep = -1;
+            fromAbnormalPath = false; // 重置異常路徑標記
+            switchToNormalButtons();
+            hideAbnormalStep();
+            document.getElementById('deviceStatus').textContent = '待機中...';
+            document.getElementById('pcStatus').textContent = '連線正常';
+            document.getElementById('currentStatus').innerHTML = '準備開始 - 選擇 CALI. 或 TEST 模式<br><small>開始準備中 - CALI.またはTESTモードを選択</small>';
+            document.getElementById('progressFill').style.width = '0%';
+            
+            // 重置所有步驟
+            for (let i = 0; i <= 11; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                if (stepElement) {
+                    stepElement.classList.remove('active', 'completed');
+                    stepElement.classList.add('pending');
+                }
+            }
+            
+            // 重置7-1步驟
+            const step7_1Element = document.getElementById('step7-1');
+            if (step7_1Element) {
+                step7_1Element.classList.remove('active', 'completed');
+                step7_1Element.classList.add('pending');
+            }
+            
+            // 清除特效
+            document.getElementById('deviceSide').classList.remove('highlight');
+            document.getElementById('pcSide').classList.remove('highlight');
+            document.getElementById('dataFlow').style.opacity = '0';
+        }
+        
+        function startCalibration() {
+            if (!checkPrerequisites()) {
+                showError('無法開始校正：請確認已掃描QR CODE且PC端連線正常');
+                return;
+            }
+            
+            stopAnimation(); // 停止之前的動畫
+            fromAbnormalPath = false; // 重置異常路徑標記
+            currentStep = 0;
+            updateDisplay();
+            
+            if (autoMode) {
+                startAutoAnimation();
+            }
+        }
+        
+        function startTest() {
+            if (!checkPrerequisites()) {
+                showError('無法開始測試：請確認已掃描QR CODE且PC端連線正常');
+                return;
+            }
+            
+            stopAnimation(); // 停止之前的動畫
+            fromAbnormalPath = false; // 重置異常路徑標記
+            currentStep = 5; // 直接從測試模式開始
+            updateDisplay();
+            
+            if (autoMode) {
+                startAutoAnimation();
+            }
+        }
+        
+        // 初始化
+        reset();
+        updatePrerequisiteDisplay();
+        setAutoMode(); // 預設為自動模式
+        setNormalTest(); // 預設為測試正常
+    </script>
+</body>
+</html>
