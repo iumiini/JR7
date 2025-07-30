@@ -3,1816 +3,1075 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUV殺菌口罩模擬器</title>
+    <title>JR7校正治具操作流程</title>
     <style>
         body {
-            font-family: 'Microsoft JhengHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            min-height: 100vh;
+            background-color: #e1f5fe;
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .header h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .main-panel {
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        
-        .device-display {
-            background: #2c3e50;
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            color: white;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-        }
-        
-        .device-name {
-            font-size: 18px;
-            margin-bottom: 20px;
-            opacity: 0.8;
-        }
-        
-        .lights-panel {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        
-        .light {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 3px solid #444;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        
-        .light.green.on {
-            background: #2ecc71;
-            box-shadow: 0 0 20px #2ecc71;
-            border-color: #27ae60;
-        }
-        
-        .light.red.on {
-            background: #e74c3c;
-            box-shadow: 0 0 20px #e74c3c;
-            border-color: #c0392b;
-        }
-        
-        .light.red.blink {
-            animation: blink 1s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
-        }
-        
-        .light.off {
-            background: #34495e;
-        }
-        
-        .fan-display {
-            margin: 20px 0;
-            font-size: 24px;
-        }
-        
-        .fan-icon {
-            display: inline-block;
-            font-size: 40px;
-            margin: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .fan-icon.speed1 {
-            animation: rotate 2s linear infinite;
-        }
-        
-        .fan-icon.speed2 {
-            animation: rotate 1s linear infinite;
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .state-info {
-            background: rgba(52, 73, 94, 0.1);
+            background: white;
             border-radius: 10px;
             padding: 20px;
-            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
-        .current-state {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        
-        .state-description {
-            color: #7f8c8d;
-            line-height: 1.6;
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
         }
         
         .controls {
-            background: #ecf0f1;
-            border-radius: 15px;
-            padding: 25px;
-        }
-        
-        .controls h3 {
-            margin-top: 0;
-            color: #2c3e50;
             text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .button-group {
-            margin-bottom: 20px;
+        .controls h4 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
         }
         
-        .button-group label {
+        .control-group {
+            margin: 15px 0;
+        }
+        
+        .control-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             font-weight: bold;
-            color: #34495e;
+            color: #555;
         }
         
-        .btn {
-            width: 100%;
-            padding: 15px;
-            margin: 5px 0;
+        .mode-toggle {
+            background: #28a745;
+            color: white;
             border: none;
-            border-radius: 8px;
+            padding: 12px 25px;
+            margin: 0 5px;
+            border-radius: 25px;
+            cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
+            transition: all 0.3s;
         }
         
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .mode-toggle.inactive {
+            background: #6c757d;
         }
         
-        .btn:active {
-            transform: translateY(0);
+        .mode-toggle:hover {
+            transform: scale(1.05);
         }
         
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-        
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #7f8c8d;
-        }
-        
-        .btn-success {
-            background: #2ecc71;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #27ae60;
-        }
-        
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-        
-        .btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .btn:disabled:hover {
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .power-button {
-            position: relative;
-            overflow: hidden;
-            user-select: none;
-        }
-        
-        .power-button:active {
-            background: #2980b9;
-            transform: translateY(1px);
-        }
-        
-        .press-indicator {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 4px;
-            background: #f39c12;
-            width: 0%;
-            transition: width 0.1s ease;
-            border-radius: 0 0 8px 8px;
-        }
-        
-        .countdown-display {
-            background: rgba(231, 76, 60, 0.1);
-            border: 2px solid #e74c3c;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 15px 0;
-            text-align: center;
-            font-weight: bold;
-            color: #e74c3c;
-        }
-        
-        .countdown-number {
-            font-size: 24px;
-            margin: 5px 0;
-        }
-        
-        .countdown-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(231, 76, 60, 0.2);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-        
-        .countdown-progress {
-            height: 100%;
-            background: #e74c3c;
-            border-radius: 4px;
-            transition: width 0.1s linear;
-        }
-        
-        .status-panel {
-            background: #ecf0f1;
-            border-radius: 15px;
-            padding: 25px;
-        }
-        
-        .status-panel h3 {
-            margin-top: 0;
-            color: #2c3e50;
-            text-align: center;
-        }
-        
-        .status-item {
-            margin: 15px 0;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            border-left: 4px solid #3498db;
-        }
-        
-        .status-label {
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .status-value {
-            color: #7f8c8d;
-            margin-top: 5px;
-        }
-        
-        .log-panel {
-            margin-top: 30px;
-            background: #2c3e50;
-            color: #ecf0f1;
-            border-radius: 15px;
-            padding: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-        
-        .log-panel h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        #logContainer {
-            position: relative;
-        }
-        
-        .log-entry {
-            margin: 5px 0;
-            padding: 8px 12px;
-            border-left: 3px solid #3498db;
-            background: rgba(52, 152, 219, 0.1);
-            border-radius: 3px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        
-        .log-entry.detailed {
-            border-left-color: #f39c12;
-            background: rgba(243, 156, 18, 0.1);
-        }
-        
-        .log-entry.auto-check {
-            border-left-color: #9b59b6;
-            background: rgba(155, 89, 182, 0.1);
-        }
-        
-        .log-entry.transition {
-            border-left-color: #2ecc71;
-            background: rgba(46, 204, 113, 0.1);
-        }
-        
-        .log-entry.error {
-            border-left-color: #e74c3c;
-            background: rgba(231, 76, 60, 0.1);
-        }
-        
-        .log-time {
-            font-size: 12px;
-            opacity: 0.7;
-        }
-        
-        .log-reason {
-            font-size: 12px;
-            color: #bdc3c7;
-            margin-top: 2px;
-            font-style: italic;
-        }
-        
-        .toggle-container {
-            margin: 15px 0;
-        }
-        
-        .toggle-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #34495e;
-            font-size: 14px;
-        }
-        
-        .toggle-switch {
-            width: 100%;
-            height: 40px;
-            background: #bdc3c7;
-            border-radius: 20px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-        
-        .toggle-switch.active {
-            background: #2ecc71;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            right: 2px;
-            bottom: 2px;
-            background: white;
-            border-radius: 18px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        
-        .toggle-switch.active .toggle-slider {
-            background: #27ae60;
-            color: white;
-        }
-        
-        .battery-flags {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        
-        .flag-btn {
-            flex: 1;
-            min-width: 60px;
-            padding: 8px 12px;
-            border: 2px solid #bdc3c7;
-            background: #ecf0f1;
-            color: #7f8c8d;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .flag-btn:hover {
-            border-color: #95a5a6;
-        }
-        
-        .flag-btn.active {
-            border-color: #3498db;
-            background: #3498db;
-            color: white;
-        }
-        
-        .flag-btn.low.active {
-            border-color: #e74c3c;
-            background: #e74c3c;
-        }
-        
-        .available-actions {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #7f8c8d;
-            line-height: 1.6;
-        }
-        
-        /* 狀態轉移圖MAP樣式 - 金字塔布局 */
-        .state-map-panel {
-            grid-column: 1 / -1;
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            border: 2px solid #dee2e6;
-        }
-        
-        .state-map-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .state-map-header h3 {
-            margin: 0;
-            color: #2c3e50;
-        }
-        
-        .map-toggle-btn {
-            padding: 8px 16px;
-            background: #3498db;
+        button {
+            background: #007bff;
             color: white;
             border: none;
-            border-radius: 6px;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
+            font-size: 16px;
         }
         
-        .map-toggle-btn:hover {
-            background: #2980b9;
+        button:hover {
+            background: #0056b3;
         }
         
-        .state-map {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 25px;
-            margin-top: 20px;
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
         }
         
-        .map-row {
+        .main-content {
             display: flex;
             gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            width: 100%;
         }
         
-        .map-row.top {
-            /* 最上層：初始狀態組 - 1個 */
-            justify-content: center;
+        .flow-diagram {
+            flex: 2;
+            min-width: 600px;
         }
         
-        .map-row.middle {
-            /* 中層：三個運行狀態組 - 3個並排 */
-            justify-content: space-around;
-            max-width: 900px;
-        }
-        
-        .map-row.bottom {
-            /* 底層：異常狀態 - 1個 */
-            justify-content: center;
-        }
-        
-        .state-group {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            min-width: 220px;
-            max-width: 280px;
+        .flow-steps {
             flex: 1;
+            min-width: 500px;
         }
         
-        .state-group.active {
-            border-color: #3498db;
-            box-shadow: 0 4px 16px rgba(52, 152, 219, 0.3);
-            transform: translateY(-2px);
+        .diagram-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            position: relative;
+            height: 500px;
         }
         
-        /* 針對不同層級的特殊樣式 */
-        .map-row.top .state-group {
-            min-width: 300px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        .pc-side, .device-side {
+            width: 280px;
+            background: #e6f3ff;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            height: 450px;
         }
         
-        .map-row.middle .state-group {
-            min-width: 200px;
-            max-width: 250px;
+        .device-side {
+            background: #fff2e6;
+            border-color: #ff7f00;
         }
         
-        .map-row.bottom .state-group {
-            min-width: 250px;
-            background: rgba(231, 76, 60, 0.05);
-            border-color: rgba(231, 76, 60, 0.2);
-        }
-        
-        .group-title {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 15px;
+        .device-controls {
+            margin: 15px 0;
             text-align: center;
+        }
+        
+        .device-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
             font-size: 14px;
-            border-bottom: 2px solid #ecf0f1;
-            padding-bottom: 8px;
-        }
-        
-        .group-title.active {
-            color: #3498db;
-            border-bottom-color: #3498db;
-        }
-        
-        .state-item {
-            margin: 8px 0;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            font-size: 12px;
-            color: #6c757d;
-            border-left: 3px solid #dee2e6;
-            transition: all 0.3s ease;
-        }
-        
-        .state-item.current {
-            background: #3498db;
-            color: white;
-            border-left-color: #2980b9;
             font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            min-width: 80px;
+            animation: breathe 2s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(40, 167, 69, 0.8);
+                transform: scale(1.02);
+            }
+        }
+        
+        .device-button:hover {
+            background: #218838;
             transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.4);
         }
         
-        .state-item.possible {
-            background: #e8f5e8;
-            color: #27ae60;
-            border-left-color: #27ae60;
+        .device-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            animation: none;
         }
         
-        .state-item.transitioning {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
+        .waiting-blink {
+            animation: slowBlink 2s ease-in-out infinite;
+        }
+        
+        @keyframes slowBlink {
+            0%, 100% { 
+                opacity: 1;
+                background: #fff3cd;
+                border-color: #ffeaa7;
+            }
+            50% { 
+                opacity: 0.6;
+                background: #fff8e1;
+                border-color: #ffecb3;
+            }
+        }
+        
+        .external-controls {
+            position: absolute;
+            bottom: -80px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .status-button {
+            background: #28a745;
             color: white;
-            border-left-color: #d35400;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            margin: 2px;
+            transition: all 0.3s;
+        }
+        
+        .status-button.inactive {
+            background: #dc3545;
+        }
+        
+        .connection {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .usb-port {
+            background: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 0 10px;
             font-weight: bold;
-            animation: pulse 0.8s ease-in-out;
-            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.4);
+        }
+        
+        .arrow {
+            font-size: 24px;
+            color: #007bff;
+            animation: pulse 1s infinite;
         }
         
         @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
-        .state-item.protection {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        .data-flow {
+            position: absolute;
+            top: 70%;
+            background: #ff6b6b;
             color: white;
-            border-left-color: #a93226;
-            font-weight: bold;
-            animation: protectionPulse 1.5s ease-in-out infinite;
-            box-shadow: 0 2px 12px rgba(231, 76, 60, 0.5);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            opacity: 0;
+            transition: all 0.5s;
+            white-space: nowrap;
         }
         
-        @keyframes protectionPulse {
+        .data-flow.device-to-pc {
+            left: 80%;
+            animation: dataToPC 2s ease-in-out;
+        }
+        
+        .data-flow.pc-to-device {
+            left: 20%;
+            animation: dataToDEVICE 2s ease-in-out;
+        }
+        
+        .data-flow.notify-pc {
+            left: 80%;
+            animation: dataToPC 2s ease-in-out;
+        }
+        
+        @keyframes dataToPC {
+            0% { 
+                left: 80%; 
+                opacity: 1;
+            }
+            100% { 
+                left: 20%; 
+                opacity: 1;
+            }
+        }
+        
+        @keyframes dataToDEVICE {
+            0% { left: 20%; opacity: 1; }
+            100% { left: 80%; opacity: 1; }
+        }
+        
+        .status-display {
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .flow-steps {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            height: fit-content;
+        }
+        
+        .flow-steps h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        
+        .steps-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .steps-column {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .column-title {
+            text-align: center;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .step-item {
+            padding: 10px 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #e9ecef;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            font-size: 13px;
+            position: relative;
+        }
+        
+        .step-item.active {
+            background: #28a745;
+            color: white;
+            border-left-color: #155724;
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+            animation: activeStep 0.5s ease-in-out;
+        }
+        
+        .step-item.completed {
+            background: #6c757d;
+            color: white;
+            border-left-color: #495057;
+        }
+        
+        .step-item.pending {
+            background: #f8f9fa;
+            color: #6c757d;
+            border-left-color: #e9ecef;
+        }
+        
+        .step-arrow {
+            text-align: center;
+            font-size: 16px;
+            color: #007bff;
+            margin: 8px 0;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-3px); }
+            60% { transform: translateY(-2px); }
+        }
+        
+        @keyframes activeStep {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1.02); }
+        }
+        
+        .highlight {
+            animation: highlight 1s ease-in-out;
+        }
+        
+        @keyframes highlight {
             0%, 100% { 
-                transform: scale(1);
-                box-shadow: 0 2px 12px rgba(231, 76, 60, 0.5);
+                border-color: inherit;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             }
             50% { 
-                transform: scale(1.1);
-                box-shadow: 0 4px 20px rgba(231, 76, 60, 0.8);
+                border-color: #ffc107;
+                box-shadow: 0 8px 16px rgba(255, 193, 7, 0.4);
+                transform: scale(1.02);
             }
         }
         
-        @media (max-width: 1200px) {
-            .map-row.middle {
-                max-width: 600px;
-            }
-            .state-group {
-                min-width: 180px;
-                max-width: 220px;
-            }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
         }
         
-        @media (max-width: 768px) {
-            .main-panel {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-            
-            .map-row.middle {
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
-            }
-            
-            .state-group {
-                min-width: 280px;
-                max-width: 320px;
-            }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+        
+        .step-number {
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .step-item.active .step-number {
+            background: #155724;
+        }
+        
+        .step-item.completed .step-number {
+            background: #495057;
+        }
+        
+        .step-item.pending .step-number {
+            background: #adb5bd;
+        }
+        
+        .current-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #155724;
+        }
+        
+        .current-info strong {
+            font-size: 16px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .prerequisite-check {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🦠 GUV殺菌口罩 模擬器 - 強化版</h1>
-            <p>模擬GUV殺菌口罩設備的完整狀態轉換流程 | 新增狀態轉移圖MAP與詳細日誌</p>
-        </div>
+        <h1 class="title">JR7校正治具操作流程動畫<br><small style="font-size: 18px; color: #666;">JR7校正治具操作フロー動画</small></h1>
         
-        <!-- 狀態轉移圖MAP - 金字塔排列 -->
-        <div class="state-map-panel" id="stateMapPanel">
-            <div class="state-map-header">
-                <h3>🗺️ 狀態轉移圖 MAP</h3>
-                <button class="map-toggle-btn" onclick="toggleStateMap()" id="mapToggleBtn">顯示MAP</button>
-            </div>
-            <div class="state-map" id="stateMapContainer" style="display: none;">
-                <!-- 最上層：初始狀態組 -->
-                <div class="map-row top">
-                    <div class="state-group" id="initialGroup">
-                        <div class="group-title">🚀 初始狀態組</div>
-                        <div class="state-item" data-state="S0">S0: 初始狀態</div>
-                        <div class="state-item" data-state="C0">C0: 充電初始狀態</div>
-                        <div class="state-item" data-state="A0">A0: 滿充電初始狀態</div>
-                    </div>
-                </div>
-                
-                <!-- 中層：三個運行狀態組 -->
-                <div class="map-row middle">
-                    <div class="state-group" id="batteryGroup">
-                        <div class="group-title">🔋 電池運行狀態組</div>
-                        <div class="state-item" data-state="S1">S1: 電池供電風扇1速</div>
-                        <div class="state-item" data-state="S2">S2: 電池供電風扇2速</div>
-                    </div>
-                    
-                    <div class="state-group" id="chargingGroup">
-                        <div class="group-title">⚡ 充電運行狀態組</div>
-                        <div class="state-item" data-state="C1">C1: 充電器供電風扇1速</div>
-                        <div class="state-item" data-state="C2">C2: 充電器供電風扇2速</div>
-                    </div>
-                    
-                    <div class="state-group" id="fullChargedGroup">
-                        <div class="group-title">🔋💯 滿充電運行狀態組</div>
-                        <div class="state-item" data-state="A1">A1: 滿充下風扇1速</div>
-                        <div class="state-item" data-state="A2">A2: 滿充下風扇2速</div>
-                    </div>
-                </div>
-                
-                <!-- 底層：異常狀態 -->
-                <div class="map-row bottom">
-                    <div class="state-group" id="exceptionGroup">
-                        <div class="group-title">⚠️ 異常狀態</div>
-                        <div class="state-item" data-state="S3">S3: 電池低電量保護</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="main-panel">
-            <div class="controls">
-                <h3>⚡ 控制面板</h3>
-                
-                <div class="button-group">
-                    <label>按鍵操作</label>
-                    <button class="btn btn-primary power-button" 
-                            onmousedown="startPress()" 
-                            onmouseup="endPress()" 
-                            onmouseleave="endPress()"
-                            ontouchstart="startPress()" 
-                            ontouchend="endPress()"
-                            id="powerButton">
-                        <span id="buttonText">按住開關</span>
-                        <div class="press-indicator" id="pressIndicator"></div>
-                    </button>
-                </div>
-                
-                <div class="button-group">
-                    <label>電源管理</label>
-                    <div class="toggle-container">
-                        <label class="toggle-label">充電器狀態</label>
-                        <div class="toggle-switch" onclick="toggleCharger()">
-                            <div class="toggle-slider" id="chargerToggle">
-                                <span class="toggle-text" id="chargerToggleText">未連接</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="toggle-container">
-                        <label class="toggle-label">電池狀態</label>
-                        <div class="battery-flags">
-                            <button class="flag-btn" id="batteryNormalFlag" onclick="setBatteryStatus('normal')">正常</button>
-                            <button class="flag-btn" id="batteryLowFlag" onclick="setBatteryStatus('low')">低電量</button>
-                            <button class="flag-btn" id="batteryFullFlag" onclick="setBatteryStatus('full')">已充滿</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="button-group">
-                    <label>系統模擬</label>
-                    <button class="btn btn-primary" onclick="resetSystem()">系統重置</button>
-                </div>
+        <div class="controls">
+            <h4>🎮 演示設定<br><small style="font-size: 12px; color: #666;">デモ設定</small></h4>
+            
+            <div class="control-group">
+                <label>演示模式 / デモモード</label>
+                <button class="mode-toggle" onclick="setAutoMode()" id="autoModeBtn">自動演示模式<br><small>自動デモモード</small></button>
+                <button class="mode-toggle inactive" onclick="setManualMode()" id="manualModeBtn">手動演示模式<br><small>手動デモモード</small></button>
             </div>
             
-            <div class="device-display">
-                <div class="device-name">GUV殺菌口罩設備</div>
-                
-                <div class="lights-panel">
-                    <div>
-                        <div class="light green" id="greenLight"></div>
-                        <div style="margin-top: 8px; font-size: 12px;">綠燈</div>
-                    </div>
-                    <div>
-                        <div class="light red" id="redLight"></div>
-                        <div style="margin-top: 8px; font-size: 12px;">紅燈</div>
-                    </div>
-                </div>
-                
-                <div class="fan-display">
-                    <div class="fan-icon" id="fanIcon">🌀</div>
-                    <div id="fanStatus">風扇關閉</div>
-                </div>
-                
-                <div class="state-info">
-                    <div class="current-state" id="currentState">S0: 初始狀態</div>
-                    <div class="state-description" id="stateDescription">設備處於完全關閉的狀態</div>
-                    <div class="available-actions" id="availableActions">
-                        可用操作：長按開關（進入S1），確認充電（進入C0）
+            <div class="control-group">
+                <label>演示情境 / デモシナリオ</label>
+                <button class="mode-toggle" onclick="setNormalTest()" id="normalTestBtn">測試正常<br><small>テスト正常</small></button>
+                <button class="mode-toggle inactive" onclick="setAbnormalTest()" id="abnormalTestBtn">測試異常<br><small>テスト異常</small></button>
+            </div>
+            
+            <div class="control-group">
+                <label>流程控制 / フロー制御</label>
+                <button onclick="nextStep()" id="nextStepBtn" style="display: none;">下一步<br><small>次のステップ</small></button>
+                <button onclick="stopAnimation()">停止<br><small>停止</small></button>
+                <button onclick="reset()">重置<br><small>リセット</small></button>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 14px; color: #666;">
+                <strong>使用說明：</strong><span id="modeInstruction">選擇演示模式後，按下治具上的 CALI. 或 TEST 按鍵開始自動演示</span>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="current-info" id="currentInfo">
+            <strong>當前狀態：</strong><span id="currentStatus">準備開始</span>
+        </div>
+        
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+        
+        <div class="main-content">
+            <div class="flow-diagram">
+                <div class="diagram-area">
+                    <div class="pc-side" id="pcSide">
+                        <h3>📱 PC端</h3>
+                        <div><strong>系統:</strong> Windows 11</div>
+                        <div><strong>連接:</strong> USB接埠</div>
+                        <div><strong>功能:</strong></div>
+                        <ul>
+                            <li>Serial通訊 (Command發送)</li>
+                            <li>Serial通訊 (Data接收)</li>
+                            <li>資料儲存 .csv 格式</li>
+                        </ul>
+                        <div id="pcStatus" class="status-display">等待連接...</div>
+                        
+                        <div class="device-controls">
+                            <button class="device-button" onclick="sendAsciiCommand()" id="asciiBtn" disabled>發送ASCII "1" 指令<br><small>ASCII "1" コマンド送信</small></button>
+                        </div>
                     </div>
                     
-                    <!-- S3狀態的倒數顯示 -->
-                    <div class="countdown-display" id="countdownDisplay" style="display: none;">
-                        <div>低電量保護模式</div>
-                        <div class="countdown-number" id="countdownNumber">10</div>
-                        <div>秒後自動返回</div>
-                        <div class="countdown-bar">
-                            <div class="countdown-progress" id="countdownProgress"></div>
+                    <div class="connection">
+                        <span class="arrow">⬅</span>
+                        <div class="usb-port">USB Port</div>
+                        <span class="arrow">➡</span>
+                        <div class="data-flow" id="dataFlow"></div>
+                    </div>
+                    
+                    <div class="device-side" id="deviceSide">
+                        <h3>🔧 JR7校正治具</h3>
+                        <div><strong>系統 / システム:</strong> STM32F407</div>
+                        <div><strong>連接 / 接続:</strong> USART Port</div>
+                        <div><strong>功能 / 機能:</strong></div>
+                        <ul>
+                            <li>Serial通訊 (Command接收)<br><small>シリアル通信（コマンド受信）</small></li>
+                            <li>Serial通訊 (Data裝置)<br><small>シリアル通信（データ送信）</small></li>
+                            <li>校正治具操作<br><small>校正治具操作</small></li>
+                        </ul>
+                        
+                        <div class="prerequisite-check">
+                            <div>前置條件檢查 / 前提条件チェック：</div>
+                            <div>✅ QR CODE: <span id="qrStatus">已掃描</span></div>
+                            <div>✅ PC連線 / PC接続: <span id="pcConnStatus">正常</span></div>
+                        </div>
+                        
+                        <div class="device-controls">
+                            <button class="device-button" onclick="startCalibration()" id="caliBtn">CALI.</button>
+                            <button class="device-button" onclick="startTest()" id="testBtn">TEST</button>
+                        </div>
+                        
+                        <div id="deviceStatus" class="status-display">待機中... / 待機中...</div>
+                        
+                        <div class="external-controls">
+                            <div>外部狀態控制 / 外部状態制御</div>
+                            <button class="status-button" onclick="toggleQR()" id="qrButton">已掃描QR CODE</button>
+                            <button class="status-button" onclick="togglePC()" id="pcButton">PC端連線正常</button>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="status-panel">
-                <h3>📊 系統狀態</h3>
-                
-                <div class="status-item">
-                    <div class="status-label">當前狀態</div>
-                    <div class="status-value" id="statusState">S0</div>
-                </div>
-                
-                <div class="status-item">
-                    <div class="status-label">電池狀態</div>
-                    <div class="status-value" id="batteryStatus">正常</div>
-                </div>
-                
-                <div class="status-item">
-                    <div class="status-label">充電狀態</div>
-                    <div class="status-value" id="chargerStatus">未連接</div>
-                </div>
-                
-                <div class="status-item">
-                    <div class="status-label">風扇速度</div>
-                    <div class="status-value" id="fanSpeed">關閉</div>
-                </div>
-                
-                <div class="status-item">
-                    <div class="status-label">按鍵狀態</div>
-                    <div class="status-value" id="buttonStatus">啟用</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="log-panel">
-            <h3>📝 詳細操作日誌</h3>
-            <div id="logContainer">
-                <div class="log-entry">
-                    <span class="log-time">[系統啟動]</span> 設備已初始化至 S0 狀態
-                    <div class="log-reason">初始化完成，所有硬體組件處於預設狀態</div>
+            <div class="flow-steps">
+                <h3>📋 完整操作流程<br><small style="font-size: 14px; color: #666;">完全操作フロー</small></h3>
+                <div class="steps-container">
+                    <div class="steps-column">
+                        <div class="column-title">校正流程 (CALI.)<br><small>校正フロー (CALI.)</small></div>
+                        <div class="step-item pending" id="step0">
+                            <span class="step-number">0</span>按下「CALI.」按鍵<br><small>「CALI.」ボタンを押下</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step1">
+                            <span class="step-number">1</span>開始校正模式<br><small>校正モード開始</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step2">
+                            <span class="step-number">2</span>校正中...<br><small>校正中...</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step3">
+                            <span class="step-number">3</span>校正結束判定結果<br><small>校正終了結果判定</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step4">
+                            <span class="step-number">4</span>結束校正模式進入降溫模式<br><small>校正モード終了、冷却モード開始</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                    </div>
+                    
+                    <div class="steps-column">
+                        <div class="column-title">測試流程 (TEST / 接續)<br><small>テストフロー (TEST / 継続)</small></div>
+                        <div class="step-item pending" id="step5">
+                            <span class="step-number">5</span>測試模式中...<br><small>テストモード中...</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step6">
+                            <span class="step-number">6</span>測試模式結束<br><small>テストモード終了</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step7">
+                            <span class="step-number">7</span>將校正與測試結果存入SD卡<br><small>校正・テスト結果をSDカードに保存</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step7-1" style="display: none;">
+                            <span class="step-number">7-1</span>❌ 測試結果NG<br><small>請選擇 START(重新校正) 或 END(結束流程)</small><br><small style="color: #888;">START（再校正）またはEND（終了）を選択</small>
+                        </div>
+                        <div class="step-arrow" id="arrow7-1" style="display: none;">↓</div>
+                        <div class="step-item pending" id="step8">
+                            <span class="step-number">8</span>生產人員確認中，等待PC端發送指令<br><small>生産担当者確認中、PC側コマンド送信待ち</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step9">
+                            <span class="step-number">9</span>校正治具接收指令正確<br><small>校正治具コマンド受信正常</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step10">
+                            <span class="step-number">10</span>將資料送到PC端<br><small>データをPC側に送信</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step11">
+                            <span class="step-number">11</span>🏁 結束流程<br><small>フロー終了</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 狀態機定義
-        const states = {
-            S0: { name: 'S0: 初始狀態', green: false, red: false, fan: 0, desc: '設備處於完全關閉的狀態', actions: '可用操作：長按開關（進入S1），確認充電（進入C0）', group: 'initial' },
-            S1: { name: 'S1: 電池供電風扇1速', green: true, red: false, fan: 1, desc: '設備以電池電源運行在低速模式', actions: '可用操作：短按開關（進入S2）、長按開關（返回S0）、確認充電（進入C1）', group: 'battery' },
-            S2: { name: 'S2: 電池供電風扇2速', green: true, red: false, fan: 2, desc: '設備以電池電源運行在高速模式', actions: '可用操作：短按開關（返回S1）、長按開關（返回S0）、確認充電（進入C2）', group: 'battery' },
-            S3: { name: 'S3: 電池低電量', green: false, red: 'blink', fan: 0, desc: '設備檢測到低電壓，進入保護模式', actions: '按鍵禁用，自動返回S0或電壓恢復', group: 'exception' },
-            C0: { name: 'C0: 充電初始狀態', green: false, red: true, fan: 0, desc: '設備已連接充電源但未運行風扇', actions: '可用操作：長按開關（進入C1）、電池充滿（進入A0）', group: 'initial' },
-            C1: { name: 'C1: 充電器供電風扇1速', green: true, red: true, fan: 1, desc: '設備在充電同時以低速運行風扇', actions: '可用操作：短按開關（進入C2）、長按開關（返回S0）、移除充電（進入S1）', group: 'charging' },
-            C2: { name: 'C2: 充電器供電風扇2速', green: true, red: true, fan: 2, desc: '設備在充電同時以高速運行風扇', actions: '可用操作：短按開關（返回C1）、長按開關（返回S0）、移除充電（進入S2）', group: 'charging' },
-            A0: { name: 'A0: 滿充電初始狀態', green: false, red: false, fan: 0, desc: '設備在電池充滿時的狀態', actions: '可用操作：長按開關（進入A1）', group: 'initial' },
-            A1: { name: 'A1: 滿充下風扇1速', green: true, red: false, fan: 1, desc: '設備直接使用交流電源以低速運行', actions: '可用操作：短按開關（進入A2）、移除充電（取決於電池狀態）', group: 'fullcharged' },
-            A2: { name: 'A2: 滿充下風扇2速', green: true, red: false, fan: 2, desc: '設備直接使用交流電源以高速運行', actions: '可用操作：短按開關（返回A1）、移除充電（取決於電池狀態）', group: 'fullcharged' }
-        };
-
-        // 狀態組對應關係
-        const stateGroups = {
-            'initial': ['S0', 'C0', 'A0'],
-            'battery': ['S1', 'S2'],
-            'charging': ['C1', 'C2'],
-            'fullcharged': ['A1', 'A2'],
-            'exception': ['S3']
-        };
-
-        // 系統狀態
-        let currentState = 'S0';
-        let chargerConnected = false;
-        let batteryLevel = 'normal'; // normal, low, full
-        let lowVoltageTimer = null;
-        let countdownTimer = null;
-        let countdownSeconds = 0;
-        let stateMapVisible = true;
+        let currentStep = -1;
+        let autoMode = true;
+        let manualMode = false;
+        let animationTimer = null;
+        let qrScanned = true;
+        let pcConnected = true;
+        let testNormal = true; // 預設測試正常
+        let fromAbnormalPath = false; // 記錄是否來自異常路徑
         
-        // 按鍵狀態
-        let pressTimer = null;
-        let isPressed = false;
-        let pressStartTime = 0;
-        const LONG_PRESS_DURATION = 1000; // 1秒為長按
-
-        // 初始化
-        window.onload = function() {
-            updateDisplay();
-            updateStateMap();
-            // 設定初始旗標狀態
-            document.getElementById('batteryNormalFlag').classList.add('active');
-        };
-
-        // 狀態轉移圖MAP控制
-        function toggleStateMap() {
-            const mapContainer = document.getElementById('stateMapContainer');
-            const toggleBtn = document.getElementById('mapToggleBtn');
-            
-            if (stateMapVisible) {
-                mapContainer.style.display = 'none';
-                toggleBtn.textContent = '顯示MAP';
-                stateMapVisible = false;
-                addDetailedLog('系統操作', 'MAP功能已隱藏', 'auto-check');
-            } else {
-                mapContainer.style.display = 'flex';
-                toggleBtn.textContent = '隱藏MAP';
-                stateMapVisible = true;
-                addDetailedLog('系統操作', 'MAP功能已顯示', 'auto-check');
-            }
-        }
-
-        function showTransitionEffect(targetState, duration = 800) {
-            const targetStateItem = document.querySelector(`[data-state="${targetState}"]`);
-            if (targetStateItem) {
-                if (targetState === 'S3') {
-                    // S3保護狀態使用特殊效果
-                    targetStateItem.classList.add('protection');
-                    setTimeout(() => {
-                        targetStateItem.classList.remove('protection');
-                    }, duration);
-                } else {
-                    // 其他狀態使用一般過渡效果
-                    targetStateItem.classList.add('transitioning');
-                    setTimeout(() => {
-                        targetStateItem.classList.remove('transitioning');
-                    }, duration);
-                }
-            }
-        }
-
-        function updateStateMap() {
-            // 清除所有高亮
-            document.querySelectorAll('.state-group').forEach(group => {
-                group.classList.remove('active');
-            });
-            document.querySelectorAll('.group-title').forEach(title => {
-                title.classList.remove('active');
-            });
-            document.querySelectorAll('.state-item').forEach(item => {
-                item.classList.remove('current', 'possible');
-            });
-
-            // 高亮當前狀態所屬的群組
-            const currentGroup = states[currentState].group;
-            const groupMapping = {
-                'initial': 'initialGroup',
-                'battery': 'batteryGroup', 
-                'charging': 'chargingGroup',
-                'fullcharged': 'fullChargedGroup',
-                'exception': 'exceptionGroup'
-            };
-            
-            const activeGroupElement = document.getElementById(groupMapping[currentGroup]);
-            if (activeGroupElement) {
-                activeGroupElement.classList.add('active');
-                activeGroupElement.querySelector('.group-title').classList.add('active');
-            }
-
-            // 高亮當前狀態
-            const currentStateItem = document.querySelector(`[data-state="${currentState}"]`);
-            if (currentStateItem) {
-                currentStateItem.classList.add('current');
-            }
-
-            // 標示可能的下一個狀態
-            const possibleStates = getPossibleNextStates();
-            possibleStates.forEach(state => {
-                const stateItem = document.querySelector(`[data-state="${state}"]`);
-                if (stateItem && state !== currentState) {
-                    stateItem.classList.add('possible');
-                }
-            });
-        }
-
-        function getPossibleNextStates() {
-            const possible = [];
-            
-            switch(currentState) {
-                case 'S0':
-                    // 長按開關的可能路徑（根據當前充電器和電池狀態）
-                    if (!chargerConnected) {
-                        possible.push('S1'); // 無充電器 → 直接電池模式
-                    } else {
-                        if (batteryLevel === 'full') {
-                            possible.push('A1'); // 有充電器 + 電池滿 → 滿充電模式
-                        } else {
-                            possible.push('C1'); // 有充電器 + 電池未滿 → 充電模式
-                        }
-                    }
-                    
-                    // 連接/斷開充電器的可能路徑
-                    if (!chargerConnected) {
-                        // 當前無充電器，可能連接充電器
-                        if (batteryLevel === 'full') {
-                            possible.push('C0', 'A0'); // 連接充電器 → C0 → A0
-                        } else {
-                            possible.push('C0'); // 連接充電器 → C0
-                        }
-                    }
-                    
-                    // 電池狀態變化的可能性（在有充電器時）
-                    if (chargerConnected) {
-                        if (batteryLevel !== 'full') {
-                            possible.push('A0'); // 電池可能充滿
-                        }
-                        if (batteryLevel !== 'normal') {
-                            possible.push('C0'); // 電池可能變正常
-                        }
-                    }
-                    break;
-                    
-                case 'S1':
-                    possible.push('S2'); // 短按開關
-                    
-                    // 長按開關的路徑
-                    if (!chargerConnected) {
-                        possible.push('S0'); // 無充電器時直接關機
-                    } else {
-                        possible.push('C0'); // 有充電器時進入充電模式
-                    }
-                    
-                    // 連接充電器
-                    if (!chargerConnected) {
-                        possible.push('C1'); // 連接充電器保持同速度
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel !== 'low') {
-                        possible.push('S3'); // 可能變低電量
-                    }
-                    break;
-                    
-                case 'S2':
-                    possible.push('S1'); // 短按開關
-                    
-                    // 長按開關的路徑
-                    if (!chargerConnected) {
-                        possible.push('S0'); // 無充電器時直接關機
-                    } else {
-                        possible.push('C0'); // 有充電器時進入充電模式
-                    }
-                    
-                    // 連接充電器
-                    if (!chargerConnected) {
-                        possible.push('C2'); // 連接充電器保持同速度
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel !== 'low') {
-                        possible.push('S3'); // 可能變低電量
-                    }
-                    break;
-                    
-                case 'C0':
-                    possible.push('C1'); // 長按開關
-                    
-                    // 移除充電器
-                    if (chargerConnected) {
-                        possible.push('S0'); // 移除充電器回到初始狀態
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel !== 'full') {
-                        possible.push('A0'); // 電池可能充滿
-                    }
-                    break;
-                    
-                case 'C1':
-                    possible.push('C2'); // 短按開關
-                    possible.push('C0'); // 長按開關
-                    
-                    // 移除充電器
-                    if (chargerConnected) {
-                        possible.push('S1'); // 移除充電器轉為電池模式
-                        possible.push('S0'); // 長按關機時如果移除充電器
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel !== 'full') {
-                        possible.push('A1'); // 電池可能充滿
-                    }
-                    if (batteryLevel !== 'low') {
-                        possible.push('S3'); // 可能變低電量
-                    }
-                    break;
-                    
-                case 'C2':
-                    possible.push('C1'); // 短按開關
-                    possible.push('C0'); // 長按開關
-                    
-                    // 移除充電器
-                    if (chargerConnected) {
-                        possible.push('S2'); // 移除充電器轉為電池模式
-                        possible.push('S0'); // 長按關機時如果移除充電器
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel !== 'full') {
-                        possible.push('A2'); // 電池可能充滿
-                    }
-                    if (batteryLevel !== 'low') {
-                        possible.push('S3'); // 可能變低電量
-                    }
-                    break;
-                    
-                case 'A0':
-                    possible.push('A1'); // 長按開關
-                    
-                    // 移除充電器
-                    if (chargerConnected) {
-                        possible.push('S0'); // 移除充電器回到初始狀態
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel === 'full') {
-                        possible.push('C0'); // 電池可能變正常
-                    }
-                    break;
-                    
-                case 'A1':
-                    possible.push('A2'); // 短按開關
-                    possible.push('A0'); // 長按開關
-                    
-                    // 移除充電器
-                    if (chargerConnected) {
-                        possible.push('S1'); // 移除充電器轉為電池模式
-                        possible.push('S0'); // 長按關機時如果移除充電器
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel === 'full') {
-                        possible.push('C1'); // 電池可能變正常
-                    }
-                    if (batteryLevel !== 'low') {
-                        possible.push('S3'); // 可能變低電量
-                    }
-                    break;
-                    
-                case 'A2':
-                    possible.push('A1'); // 短按開關
-                    possible.push('A0'); // 長按開關
-                    
-                    // 移除充電器
-                    if (chargerConnected) {
-                        possible.push('S2'); // 移除充電器轉為電池模式
-                        possible.push('S0'); // 長按關機時如果移除充電器
-                    }
-                    
-                    // 電池狀態變化
-                    if (batteryLevel === 'full') {
-                        possible.push('C2'); // 電池可能變正常
-                    }
-                    if (batteryLevel !== 'low') {
-                        possible.push('S3'); // 可能變低電量
-                    }
-                    break;
-                    
-                case 'S3':
-                    // 倒數結束或電池恢復的可能路徑
-                    if (chargerConnected) {
-                        possible.push('C0'); // 有充電器時返回充電模式
-                    } else {
-                        possible.push('S0'); // 無充電器時返回初始狀態
-                    }
-                    
-                    // 電池狀態恢復的可能性
-                    if (batteryLevel === 'low') {
-                        possible.push('S0', 'C0'); // 電池可能恢復
-                    }
-                    break;
-            }
-            
-            return [...new Set(possible)]; // 去重複
-        }
-
-        function startPress() {
-            if (currentState === 'S3') {
-                addDetailedLog('按鍵操作', '低電量模式下按鍵被禁用', 'error', '保護機制：S3狀態下所有按鍵操作無效');
-                return;
-            }
-            
-            isPressed = true;
-            pressStartTime = Date.now();
-            
-            const button = document.getElementById('powerButton');
-            const indicator = document.getElementById('pressIndicator');
-            const buttonText = document.getElementById('buttonText');
-            
-            button.style.background = '#2980b9';
-            buttonText.textContent = '按住中...';
-            
-            addDetailedLog('按鍵操作', '開始按壓開關', 'detailed', '偵測按鍵按下，開始計時判斷短按或長按');
-            
-            // 開始進度條動畫
-            pressTimer = setInterval(() => {
-                if (!isPressed) return;
-                
-                const elapsed = Date.now() - pressStartTime;
-                const progress = Math.min((elapsed / LONG_PRESS_DURATION) * 100, 100);
-                indicator.style.width = progress + '%';
-                
-                if (progress >= 100) {
-                    indicator.style.background = '#2ecc71'; // 變綠表示達到長按
-                }
-            }, 50);
+        const steps = [
+            { device: "按下CALI.按鍵", pc: "連線正常", status: "用戶按下治具上的CALI.按鍵<br><small>ユーザーが治具のCALI.ボタンを押下</small>" },
+            { device: "開始校正模式", pc: "連線正常", status: "治具進入校正模式，建立通訊連接<br><small>治具が校正モードに入り、通信接続を確立</small>" },
+            { device: "校正中...", pc: "連線正常", status: "治具正在執行校正程序<br><small>治具が校正プロセスを実行中</small>" },
+            { device: "校正結束判定結果", pc: "連線正常", status: "校正完成，系統判定校正結果<br><small>校正完了、システムが校正結果を判定</small>" },
+            { device: "進入降溫模式", pc: "連線正常", status: "治具進入降溫階段，等待溫度穩定<br><small>治具が冷却段階に入り、温度安定を待機</small>" },
+            { device: "測試模式中...", pc: "預備接收資料", status: "開始執行測試程序，通知PC準備接收<br><small>テストプロセス開始、PC側に受信準備を通知</small>" },
+            { device: "測試模式結束", pc: "預備接收資料", status: "測試完成，準備存儲數據<br><small>テスト完了、データ保存準備</small>" },
+            { device: "💾 存入SD卡", pc: "預備接收資料", status: "將校正與測試結果存入SD卡<br><small>校正・テスト結果をSDカードに保存</small>" },
+            { device: "等待確認中...", pc: "⏳ 等待發送指令", status: "生產人員確認中，等待PC端發送指令<br><small>生産担当者確認中、PC側コマンド送信待ち</small>" },
+            { device: "✅ 接收指令正確", pc: "📤 已發送指令", status: "校正治具接收指令正確<br><small>校正治具コマンド受信正常</small>" },
+            { device: "🔄 傳送數據到PC", pc: "🔄 接收數據中...", status: "將資料送到PC端<br><small>データをPC側に送信</small>" },
+            { device: "🏁 流程完成", pc: "💾 數據已儲存", status: "整個校正流程完成，數據已安全儲存<br><small>全校正フロー完了、データ安全保存済み</small>" }
+        ];
+        
+        const step7_1 = { device: "❌ 測試結果NG - 請選擇操作", pc: "等待用戶選擇", status: "測試結果異常，請選擇重新校正(START)或結束流程(END)<br><small>テスト結果異常、再校正(START)または終了(END)を選択</small>" };
+        
+        function checkPrerequisites() {
+            return qrScanned && pcConnected;
         }
         
-        function endPress() {
-            if (!isPressed || currentState === 'S3') return;
-            
-            const pressDuration = Date.now() - pressStartTime;
-            isPressed = false;
-            
-            if (pressTimer) {
-                clearInterval(pressTimer);
-                pressTimer = null;
-            }
-            
-            // 重置按鈕外觀
-            const button = document.getElementById('powerButton');
-            const indicator = document.getElementById('pressIndicator');
-            const buttonText = document.getElementById('buttonText');
-            
-            button.style.background = '#3498db';
-            buttonText.textContent = '按住開關';
-            indicator.style.width = '0%';
-            indicator.style.background = '#f39c12';
-            
-            // 判斷是短按還是長按
-            if (pressDuration >= LONG_PRESS_DURATION) {
-                addDetailedLog('按鍵操作', `長按開關 (持續${Math.round(pressDuration)}ms)`, 'detailed', '長按操作：通常用於開機/關機或進入主要功能');
-                longPress();
-            } else if (pressDuration >= 100) { // 至少100ms才算有效按壓
-                addDetailedLog('按鍵操作', `短按開關 (持續${Math.round(pressDuration)}ms)`, 'detailed', '短按操作：通常用於切換模式或調整設定');
-                shortPress();
-            }
-        }
-
-        function shortPress() {
-            const oldState = currentState;
-            
-            switch(currentState) {
-                case 'S1': 
-                    addDetailedLog('狀態轉換邏輯', 'S1短按：電池模式風扇加速', 'auto-check', '從低速切換到高速運轉');
-                    setState('S2'); 
-                    break;
-                case 'S2': 
-                    addDetailedLog('狀態轉換邏輯', 'S2短按：電池模式風扇減速', 'auto-check', '從高速切換到低速運轉');
-                    setState('S1'); 
-                    break;
-                case 'C1': 
-                    addDetailedLog('狀態轉換邏輯', 'C1短按：充電模式風扇加速', 'auto-check', '充電同時從低速切換到高速運轉');
-                    setState('C2'); 
-                    break;
-                case 'C2': 
-                    addDetailedLog('狀態轉換邏輯', 'C2短按：充電模式風扇減速', 'auto-check', '充電同時從高速切換到低速運轉');
-                    setState('C1'); 
-                    break;
-                case 'A1': 
-                    addDetailedLog('狀態轉換邏輯', 'A1短按：滿充電模式風扇加速', 'auto-check', '滿充電供電下從低速切換到高速運轉');
-                    setState('A2'); 
-                    break;
-                case 'A2': 
-                    addDetailedLog('狀態轉換邏輯', 'A2短按：滿充電模式風扇減速', 'auto-check', '滿充電供電下從高速切換到低速運轉');
-                    setState('A1'); 
-                    break;
-                default: 
-                    addDetailedLog('按鍵操作', `${oldState}狀態無法執行短按操作`, 'error', '當前狀態不支援短按功能');
-            }
-        }
-
-        function longPress() {
-            const oldState = currentState;
-            
-            switch(currentState) {
-                case 'S0':
-                    addDetailedLog('狀態轉換邏輯', 'S0長按：系統開機檢查', 'auto-check', '檢查充電器和電池狀態以決定進入模式');
-                    // 檢查充電器和電池狀態決定進入哪個狀態
-                    if (!chargerConnected) {
-                        addDetailedLog('自動檢查', '充電器未連接 → 進入電池模式', 'auto-check', '使用電池電源啟動低速風扇');
-                        setState('S1');
-                    } else if (chargerConnected && batteryLevel !== 'full') {
-                        addDetailedLog('自動檢查', '充電器已連接 + 電池未充滿 → 進入充電模式', 'auto-check', '邊充電邊啟動低速風扇');
-                        setState('C1');
-                    } else if (chargerConnected && batteryLevel === 'full') {
-                        addDetailedLog('自動檢查', '充電器已連接 + 電池充滿 → 進入滿充電模式', 'auto-check', '使用滿充電模式啟動低速風扇');
-                        setState('A1');
-                    }
-                    break;
-                case 'S1':
-                case 'S2':
-                    addDetailedLog('狀態轉換邏輯', `${oldState}長按：電池模式關機`, 'auto-check', '檢查是否需要轉入充電模式而非完全關機');
-                    // 電池模式關機 - 檢查充電器狀態
-                    if (chargerConnected) {
-                        addDetailedLog('自動檢查', '檢測到充電器已連接，進入充電模式而非完全關機', 'auto-check', '保持充電狀態，關閉風扇');
-                        setState('C0');
-                    } else {
-                        addDetailedLog('自動檢查', '充電器未連接，完全關機', 'auto-check', '返回初始狀態');
-                        setState('S0');
-                    }
-                    break;
-                case 'C1':
-                case 'C2':
-                    addDetailedLog('狀態轉換邏輯', `${oldState}長按：充電模式關機`, 'auto-check', '關閉風扇但保持充電狀態');
-                    // 充電模式關機 - 檢查充電器狀態
-                    addDetailedLog('自動檢查', '充電模式關機，繼續保持充電狀態', 'auto-check', '風扇停止，充電繼續');
-                    setState('C0');
-                    break;
-                case 'A1':
-                case 'A2':
-                    addDetailedLog('狀態轉換邏輯', `${oldState}長按：滿充電模式關機`, 'auto-check', '關閉風扇但保持電源連接');
-                    // 滿充電模式關機 - 檢查充電器狀態
-                    addDetailedLog('自動檢查', '滿充電模式關機，保持電源連接狀態', 'auto-check', '風扇停止，電源連接維持');
-                    setState('A0');
-                    break;
-                case 'C0':
-                    addDetailedLog('狀態轉換邏輯', 'C0長按：充電狀態下啟動風扇', 'auto-check', '開始邊充電邊運轉風扇');
-                    setState('C1');
-                    break;
-                case 'A0':
-                    addDetailedLog('狀態轉換邏輯', 'A0長按：滿充電狀態下啟動風扇', 'auto-check', '使用滿充電模式驅動風扇');
-                    setState('A1');
-                    break;
-                default:
-                    addDetailedLog('按鍵操作', `${oldState}狀態無法執行長按操作`, 'error', '當前狀態不支援長按功能');
-            }
-        }
-
-        function toggleCharger() {
-            const toggle = document.getElementById('chargerToggle');
-            const toggleText = document.getElementById('chargerToggleText');
-            const toggleSwitch = toggle.parentElement;
-            
-            if (chargerConnected) {
-                // 斷開充電器
-                chargerConnected = false;
-                toggleSwitch.classList.remove('active');
-                toggleText.textContent = '未連接';
-                addDetailedLog('電源管理', '移除充電器', 'detailed', '物理斷開充電器連接');
-                
-                switch(currentState) {
-                    case 'C0': 
-                        addDetailedLog('狀態轉換邏輯', 'C0狀態移除充電器 → 返回S0', 'transition', '充電初始狀態失去電源，回到完全關閉狀態');
-                        setState('S0'); 
-                        break;
-                    case 'C1': 
-                        addDetailedLog('狀態轉換邏輯', 'C1狀態移除充電器 → 轉入S1', 'transition', '充電運轉狀態轉為電池運轉，保持對應風扇速度');
-                        setState('S1'); 
-                        break;
-                    case 'C2': 
-                        addDetailedLog('狀態轉換邏輯', 'C2狀態移除充電器 → 轉入S2', 'transition', '充電運轉狀態轉為電池運轉，保持對應風扇速度');
-                        setState('S2'); 
-                        break;
-                    case 'A0': 
-                        addDetailedLog('狀態轉換邏輯', 'A0狀態移除充電器 → 返回S0', 'transition', '滿充電狀態失去電源，回到完全關閉狀態');
-                        setState('S0');
-                        break;
-                    case 'A1': 
-                        addDetailedLog('狀態轉換邏輯', 'A1狀態移除充電器 → 轉入S1', 'transition', '滿充電運轉狀態轉為電池運轉，保持對應風扇速度');
-                        setState('S1'); 
-                        break;
-                    case 'A2': 
-                        addDetailedLog('狀態轉換邏輯', 'A2狀態移除充電器 → 轉入S2', 'transition', '滿充電運轉狀態轉為電池運轉，保持對應風扇速度');
-                        setState('S2'); 
-                        break;
-                }
-            } else {
-                // 連接充電器
-                chargerConnected = true;
-                toggleSwitch.classList.add('active');
-                toggleText.textContent = '已連接';
-                addDetailedLog('電源管理', '連接充電器', 'detailed', '物理連接充電器，開始供電');
-                
-                switch(currentState) {
-                    case 'S0': 
-                        addDetailedLog('狀態轉換邏輯', 'S0狀態連接充電器 → 檢查電池狀態', 'auto-check', '初始狀態接入電源，需判斷電池充電狀況');
-                        if (batteryLevel === 'full') {
-                            addDetailedLog('自動檢查', '電池已充滿 → 準備進入滿充電模式', 'auto-check', '電池滿電時需經過充電模式再升級到滿充電模式');
-                            
-                            // 先進入C0狀態
-                            setTimeout(() => {
-                                addDetailedLog('狀態轉換', 'S0 → C0', 'transition', '中間狀態：先進入充電初始狀態');
-                                currentState = 'C0';
-                                updateDisplay();
-                                
-                                // 再升級到A0狀態
-                                setTimeout(() => {
-                                    addDetailedLog('狀態轉換', 'C0 → A0', 'transition', '自動升級：進入滿充電初始狀態');
-                                    currentState = 'A0';
-                                    updateDisplay();
-                                }, 700);
-                            }, 400);
-                        } else {
-                            addDetailedLog('自動檢查', '電池未充滿 → 進入C0狀態', 'auto-check', '電池未滿時進入充電模式');
-                            setTimeout(() => {
-                                addDetailedLog('狀態轉換', 'S0 → C0', 'transition', '進入充電初始狀態');
-                                currentState = 'C0';
-                                updateDisplay();
-                            }, 400);
-                        }
-                        break;
-                    case 'S1': 
-                        addDetailedLog('狀態轉換邏輯', 'S1狀態連接充電器 → 轉入C1', 'transition', '電池運轉狀態接入電源，轉為充電運轉，保持對應風扇速度');
-                        setState('C1'); 
-                        break;
-                    case 'S2': 
-                        addDetailedLog('狀態轉換邏輯', 'S2狀態連接充電器 → 轉入C2', 'transition', '電池運轉狀態接入電源，轉為充電運轉，保持對應風扇速度');
-                        setState('C2'); 
-                        break;
-                }
-            }
-            
-            updateDisplay();
-        }
-
-        function setBatteryStatus(status) {
-            const oldStatus = batteryLevel;
-            batteryLevel = status;
-            
-            // 更新旗標顯示
-            document.querySelectorAll('.flag-btn').forEach(btn => btn.classList.remove('active', 'low', 'full'));
-            const activeFlag = document.getElementById(`battery${status.charAt(0).toUpperCase() + status.slice(1)}Flag`);
-            activeFlag.classList.add('active');
-            if (status === 'low') activeFlag.classList.add('low');
-            if (status === 'full') activeFlag.classList.add('full');
-            
-            const statusText = status === 'normal' ? '正常' : status === 'low' ? '低電量' : '已充滿';
-            addDetailedLog('電池管理', `電池狀態變更：${statusText}`, 'detailed', `電池狀態從${oldStatus === 'normal' ? '正常' : oldStatus === 'low' ? '低電量' : '已充滿'}變更為${statusText}`);
-            
-            // 根據電池狀態變更處理狀態轉換
-            if (status === 'low' && ['S1', 'S2', 'C1', 'C2', 'A1', 'A2'].includes(currentState)) {
-                addDetailedLog('安全保護', '檢測到電池低電量，準備進入保護模式', 'error', '低電量保護機制：即將強制停止風扇運轉');
-                
-                // 延遲進入S3狀態，讓用戶看到保護觸發過程
-                setTimeout(() => {
-                    const oldState = currentState;
-                    currentState = 'S3';
-                    addDetailedLog('狀態轉換', `${states[oldState].name} → ${states['S3'].name}`, 'transition', '強制進入低電量保護狀態');
-                    showTransitionEffect('S3', 1000);
-                    startCountdown();
-                    updateDisplay();
-                }, 500);
-            } else if (status === 'full' && chargerConnected) {
-                // 電池充滿時的狀態升級
-                const upgradeMap = { 'C0': 'A0', 'C1': 'A1', 'C2': 'A2' };
-                if (upgradeMap[currentState]) {
-                    addDetailedLog('自動升級', `電池充滿 → 準備升級到${upgradeMap[currentState]}狀態`, 'auto-check', '充電完成，系統將自動切換到滿充電模式以提升效能');
-                    
-                    // 延遲升級，讓用戶看到過程
-                    setTimeout(() => {
-                        const oldState = currentState;
-                        const newState = upgradeMap[oldState];
-                        addDetailedLog('狀態轉換', `${states[oldState].name} → ${states[newState].name}`, 'transition', '自動升級：從充電模式升級到滿充電模式');
-                        currentState = newState;
-                        updateDisplay();
-                    }, 600);
-                } else if (currentState === 'S0') {
-                    addDetailedLog('自動升級', '電池充滿 + 充電器連接 → 準備進入A0狀態', 'auto-check', '電池滿電且有外部電源，將進入滿充電模式');
-                    
-                    // 先進入C0，再升級到A0
-                    setTimeout(() => {
-                        addDetailedLog('狀態轉換', 'S0 → C0', 'transition', '中間狀態：先進入充電初始狀態');
-                        currentState = 'C0';
-                        updateDisplay();
-                        
-                        setTimeout(() => {
-                            addDetailedLog('狀態轉換', 'C0 → A0', 'transition', '自動升級：進入滿充電初始狀態');
-                            currentState = 'A0';
-                            updateDisplay();
-                        }, 600);
-                    }, 400);
-                }
-            } else if (status === 'normal' && chargerConnected && ['A0', 'A1', 'A2'].includes(currentState)) {
-                // A狀態電池從充滿變為正常，降級到C狀態
-                const downgradeMap = { 'A0': 'C0', 'A1': 'C1', 'A2': 'C2' };
-                addDetailedLog('自動降級', `電池不再充滿 → 準備降級到${downgradeMap[currentState]}狀態`, 'auto-check', '電池電量下降，將從滿充電模式降級至充電模式');
-                
-                // 延遲降級，讓用戶看到過程
-                setTimeout(() => {
-                    const oldState = currentState;
-                    const newState = downgradeMap[oldState];
-                    addDetailedLog('狀態轉換', `${states[oldState].name} → ${states[newState].name}`, 'transition', '自動降級：從滿充電模式降級到充電模式');
-                    currentState = newState;
-                    updateDisplay();
-                }, 600);
-            } else if (oldStatus === 'low' && status !== 'low' && currentState === 'S3') {
-                // 從低電量恢復
-                addDetailedLog('狀態恢復', '電池狀態恢復，準備退出保護模式', 'transition', '電池電量恢復正常，即將解除低電量保護');
-                if (countdownTimer) {
-                    clearInterval(countdownTimer);
-                    countdownTimer = null;
-                }
-                
-                setTimeout(() => {
-                    if (chargerConnected) {
-                        addDetailedLog('狀態轉換', 'S3 → C0', 'transition', '電量恢復且有外部電源，進入充電模式');
-                        showTransitionEffect('C0', 600);
-                        currentState = 'C0';
-                        updateDisplay();
-                    } else {
-                        addDetailedLog('狀態轉換', 'S3 → S0', 'transition', '電量恢復但無外部電源，回到初始狀態');
-                        showTransitionEffect('S0', 600);
-                        currentState = 'S0';
-                        updateDisplay();
-                    }
-                }, 600);
-            }
-            
-            updateDisplay();
-        }
-
-        function resetSystem() {
-            currentState = 'S0';
-            chargerConnected = false;
-            batteryLevel = 'normal';
-            
-            // 清除所有計時器
-            if (lowVoltageTimer) {
-                clearTimeout(lowVoltageTimer);
-                lowVoltageTimer = null;
-            }
-            if (countdownTimer) {
-                clearInterval(countdownTimer);
-                countdownTimer = null;
-            }
-            if (pressTimer) {
-                clearInterval(pressTimer);
-                pressTimer = null;
-            }
-            
-            // 重置按鍵狀態
-            isPressed = false;
-            const button = document.getElementById('powerButton');
-            const indicator = document.getElementById('pressIndicator');
-            const buttonText = document.getElementById('buttonText');
-            button.style.background = '#3498db';
-            buttonText.textContent = '按住開關';
-            indicator.style.width = '0%';
-            indicator.style.background = '#f39c12';
-            
-            // 重置UI狀態
-            const toggleSwitch = document.getElementById('chargerToggle').parentElement;
-            toggleSwitch.classList.remove('active');
-            document.getElementById('chargerToggleText').textContent = '未連接';
-            
-            // 重置電池旗標
-            document.querySelectorAll('.flag-btn').forEach(btn => btn.classList.remove('active', 'low', 'full'));
-            document.getElementById('batteryNormalFlag').classList.add('active');
-            
-            addDetailedLog('系統操作', '系統重置至初始狀態', 'detailed', '所有設定回到預設值，清除所有狀態和計時器');
-            updateDisplay();
-        }
-
-        function setState(newState) {
-            // 清除現有的計時器
-            if (lowVoltageTimer) {
-                clearTimeout(lowVoltageTimer);
-                lowVoltageTimer = null;
-            }
-            if (countdownTimer) {
-                clearInterval(countdownTimer);
-                countdownTimer = null;
-            }
-            
-            const oldState = currentState;
-            
-            // 如果要進入運轉狀態，先檢查電池是否低電量
-            if (['S1', 'S2', 'C1', 'C2', 'A1', 'A2'].includes(newState) && batteryLevel === 'low') {
-                addDetailedLog('安全保護', '檢測到電池低電量，無法進入運轉狀態', 'error', '低電量安全機制：阻止進入運轉狀態');
-                
-                // 延遲進入S3保護狀態
-                setTimeout(() => {
-                    newState = 'S3';
-                    currentState = newState;
-                    addDetailedLog('狀態轉換', `${oldState} → ${states[newState].name}`, 'transition', '強制進入低電量保護狀態');
-                    showTransitionEffect('S3', 1000);
-                    startCountdown();
-                    updateDisplay();
-                }, 400);
-                return;
-            }
-            // 狀態轉換的自動檢查機制
-            else if (newState === 'S0' && chargerConnected) {
-                addDetailedLog('自動檢查', '嘗試進入S0 → 檢查充電器狀態 → 已連接', 'auto-check', 'S0進入邏輯：發現外部電源，自動轉向充電相關狀態');
-                
-                // 先轉到C0狀態並顯示
-                currentState = 'C0';
-                addDetailedLog('狀態轉換', `${oldState} → ${states['C0'].name}`, 'transition', '中間狀態：先進入充電初始狀態');
-                showTransitionEffect('C0', 600);
-                updateDisplay();
-                
-                // 如果電池已充滿，延遲轉入A0並顯示過程
-                if (batteryLevel === 'full') {
-                    setTimeout(() => {
-                        addDetailedLog('自動檢查', '檢查電池狀態 → 已充滿 → 自動轉入A0狀態', 'auto-check', '電池滿電且有外部電源，升級至滿充電模式');
-                        currentState = 'A0';
-                        addDetailedLog('狀態轉換', `C0 → ${states['A0'].name}`, 'transition', '自動升級：從充電模式升級到滿充電模式');
-                        showTransitionEffect('A0', 600);
-                        updateDisplay();
-                    }, 800); // 延遲800ms讓用戶看到C0狀態
-                }
-                return;
-            }
-            // 進入充電狀態時檢查電池狀態
-            else if (['C0', 'C1', 'C2'].includes(newState) && batteryLevel === 'full') {
-                const aStateMap = { 'C0': 'A0', 'C1': 'A1', 'C2': 'A2' };
-                const originalState = newState;
-                const finalState = aStateMap[newState];
-                
-                // 先顯示原始狀態
-                currentState = originalState;
-                addDetailedLog('狀態轉換', `${oldState} → ${states[originalState].name}`, 'transition', '中間狀態：先進入充電模式');
-                showTransitionEffect(originalState, 600);
-                updateDisplay();
-                
-                // 延遲後自動升級到A狀態
-                setTimeout(() => {
-                    addDetailedLog('自動升級', `檢查電池狀態 → 已充滿 → 自動升級${originalState}到${finalState}狀態`, 'auto-check', '電池已滿，自動從充電模式升級到滿充電模式');
-                    currentState = finalState;
-                    addDetailedLog('狀態轉換', `${originalState} → ${states[finalState].name}`, 'transition', '自動升級完成');
-                    showTransitionEffect(finalState, 600);
-                    updateDisplay();
-                }, 800); // 延遲800ms讓用戶看到中間狀態
-                return;
-            }
-            
-            currentState = newState;
-            addDetailedLog('狀態轉換', `${oldState} → ${states[newState].name}`, 'transition', `狀態轉換成功：${states[oldState] ? states[oldState].name : oldState} 轉換為 ${states[newState].name}`);
-            
-            // 如果進入S3狀態，需要啟動倒數
-            if (newState === 'S3') {
-                startCountdown();
-            }
-            
-            updateDisplay();
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
         }
         
-        function startCountdown() {
-            countdownSeconds = 10;
-            updateCountdownDisplay();
-            addDetailedLog('保護機制', '啟動10秒自動返回倒數', 'auto-check', 'S3狀態安全機制：10秒後自動退出保護模式');
+        function updatePrerequisiteDisplay() {
+            document.getElementById('qrStatus').textContent = qrScanned ? '已掃描' : '未掃描';
+            document.getElementById('pcConnStatus').textContent = pcConnected ? '正常' : '異常';
             
-            countdownTimer = setInterval(() => {
-                countdownSeconds--;
-                updateCountdownDisplay();
-                
-                if (countdownSeconds <= 0) {
-                    clearInterval(countdownTimer);
-                    countdownTimer = null;
-                    addDetailedLog('保護機制', '低電量狀態10秒超時，自動返回', 'auto-check', '倒數結束，根據充電器狀態決定返回位置');
-                    
-                    // 根據充電器狀態決定返回位置
-                    if (chargerConnected) {
-                        addDetailedLog('自動檢查', '充電器已連接 → 返回C0狀態', 'auto-check', '外部電源存在，進入充電初始狀態');
-                        setState('C0');
-                    } else {
-                        addDetailedLog('自動檢查', '充電器未連接 → 返回S0狀態', 'auto-check', '無外部電源，回到完全關閉狀態');
-                        setState('S0');
-                    }
-                }
-            }, 1000);
+            const qrDiv = document.getElementById('qrStatus').parentElement;
+            const pcDiv = document.getElementById('pcConnStatus').parentElement;
+            
+            qrDiv.innerHTML = `${qrScanned ? '✅' : '❌'} QR CODE: <span id="qrStatus">${qrScanned ? '已掃描' : '未掃描'}</span>`;
+            pcDiv.innerHTML = `${pcConnected ? '✅' : '❌'} PC連線: <span id="pcConnStatus">${pcConnected ? '正常' : '異常'}</span>`;
         }
         
-        function updateCountdownDisplay() {
-            const countdownDisplay = document.getElementById('countdownDisplay');
-            const countdownNumber = document.getElementById('countdownNumber');
-            const countdownProgress = document.getElementById('countdownProgress');
-            
-            if (currentState === 'S3') {
-                countdownDisplay.style.display = 'block';
-                countdownNumber.textContent = countdownSeconds;
-                const progressPercent = ((10 - countdownSeconds) / 10) * 100;
-                countdownProgress.style.width = progressPercent + '%';
-            } else {
-                countdownDisplay.style.display = 'none';
-            }
+        function toggleQR() {
+            qrScanned = !qrScanned;
+            const button = document.getElementById('qrButton');
+            button.textContent = qrScanned ? '已掃描QR CODE' : '未掃描QR CODE';
+            button.classList.toggle('inactive', !qrScanned);
+            updatePrerequisiteDisplay();
         }
-
+        
+        function togglePC() {
+            pcConnected = !pcConnected;
+            const button = document.getElementById('pcButton');
+            button.textContent = pcConnected ? 'PC端連線正常' : 'PC端連線異常';
+            button.classList.toggle('inactive', !pcConnected);
+            updatePrerequisiteDisplay();
+        }
+        
         function updateDisplay() {
-            const state = states[currentState];
+            const deviceStatus = document.getElementById('deviceStatus');
+            const pcStatus = document.getElementById('pcStatus');
+            const progressFill = document.getElementById('progressFill');
+            const currentStatus = document.getElementById('currentStatus');
+            const asciiBtn = document.getElementById('asciiBtn');
             
-            // 更新燈光
-            const greenLight = document.getElementById('greenLight');
-            const redLight = document.getElementById('redLight');
-            
-            greenLight.className = 'light green' + (state.green ? ' on' : ' off');
-            redLight.className = 'light red' + (state.red === true ? ' on' : state.red === 'blink' ? ' on blink' : ' off');
-            
-            // 更新風扇
-            const fanIcon = document.getElementById('fanIcon');
-            const fanStatus = document.getElementById('fanStatus');
-            
-            fanIcon.className = 'fan-icon' + (state.fan === 1 ? ' speed1' : state.fan === 2 ? ' speed2' : '');
-            
-            switch(state.fan) {
-                case 0: fanStatus.textContent = '風扇關閉'; break;
-                case 1: fanStatus.textContent = '風扇低速運轉'; break;
-                case 2: fanStatus.textContent = '風扇高速運轉'; break;
-            }
-            
-            // 更新狀態資訊
-            document.getElementById('currentState').textContent = state.name;
-            document.getElementById('stateDescription').textContent = state.desc;
-            document.getElementById('availableActions').textContent = state.actions;
-            
-            // 更新倒數顯示
-            updateCountdownDisplay();
-            
-            // 更新狀態面板
-            document.getElementById('statusState').textContent = currentState;
-            document.getElementById('batteryStatus').textContent = 
-                batteryLevel === 'low' ? '低電量' : batteryLevel === 'full' ? '已充滿' : '正常';
-            document.getElementById('chargerStatus').textContent = chargerConnected ? '已連接' : '未連接';
-            document.getElementById('fanSpeed').textContent = 
-                state.fan === 0 ? '關閉' : state.fan === 1 ? '低速' : '高速';
-            document.getElementById('buttonStatus').textContent = currentState === 'S3' ? '禁用' : '啟用';
-            
-            // 更新狀態轉移圖
-            updateStateMap();
-        }
-
-        function addDetailedLog(category, message, type = 'detailed', reason = '') {
-            const logContainer = document.getElementById('logContainer');
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('zh-TW', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit',
-                fractionalSecondDigits: 1
-            });
-            
-            const logEntry = document.createElement('div');
-            logEntry.className = `log-entry ${type}`;
-            
-            let categoryIcon = '';
-            switch(category) {
-                case '按鍵操作': categoryIcon = '🎯'; break;
-                case '狀態轉換邏輯': categoryIcon = '🔄'; break;
-                case '自動檢查': categoryIcon = '🔍'; break;
-                case '狀態轉換': categoryIcon = '➡️'; break;
-                case '電源管理': categoryIcon = '🔌'; break;
-                case '電池管理': categoryIcon = '🔋'; break;
-                case '安全保護': categoryIcon = '🛡️'; break;
-                case '保護機制': categoryIcon = '⏰'; break;
-                case '自動升級': categoryIcon = '⬆️'; break;
-                case '自動降級': categoryIcon = '⬇️'; break;
-                case '狀態恢復': categoryIcon = '✅'; break;
-                case '系統操作': categoryIcon = '⚙️'; break;
-                default: categoryIcon = '📝'; break;
-            }
-            
-            logEntry.innerHTML = `
-                <span class="log-time">[${timeStr}]</span> 
-                ${categoryIcon} <strong>${category}:</strong> ${message}
-                ${reason ? `<div class="log-reason">💡 ${reason}</div>` : ''}
-            `;
-            
-            // 添加日誌條目
-            logContainer.appendChild(logEntry);
-            
-            // 限制日誌條目數量（保留最新30條）
-            const entries = logContainer.querySelectorAll('.log-entry');
-            if (entries.length > 30) {
-                entries[0].remove();
-            }
-            
-            // 獲取日誌面板元素（包含滾動條的父容器）
-            const logPanel = document.querySelector('.log-panel');
-            
-            // 強制滾動到最底部 - 多重保障
-            function scrollToBottom() {
-                if (logPanel) {
-                    logPanel.scrollTop = logPanel.scrollHeight;
-                }
-                if (logContainer) {
-                    logContainer.scrollTop = logContainer.scrollHeight;
-                }
-            }
-            
-            // 立即滾動
-            scrollToBottom();
-            
-            // 延遲滾動（確保DOM完全更新）
-            setTimeout(scrollToBottom, 50);
-            setTimeout(scrollToBottom, 100);
-            
-            // 添加淡入動畫效果
-            logEntry.style.opacity = '0';
-            logEntry.style.transform = 'translateY(10px)';
-            
-            requestAnimationFrame(() => {
-                logEntry.style.transition = 'all 0.3s ease';
-                logEntry.style.opacity = '1';
-                logEntry.style.transform = 'translateY(0)';
+            if (currentStep >= 0 && currentStep < steps.length) {
+                deviceStatus.textContent = steps[currentStep].device;
+                pcStatus.textContent = steps[currentStep].pc;
                 
-                // 動畫完成後再次確保滾動到底部
-                setTimeout(scrollToBottom, 300);
-            });
+                // 特殊處理步驟11的狀態顯示
+                if (currentStep === 11 && fromAbnormalPath) {
+                    currentStatus.innerHTML = '結束校正與測試流程，無儲存數據<br><small>校正・テストフロー終了、データ保存なし</small>';
+                } else {
+                    currentStatus.innerHTML = steps[currentStep].status;
+                }
+                
+                // 控制ASCII按鍵的啟用狀態
+                if (currentStep === 8) {
+                    asciiBtn.disabled = false;
+                } else {
+                    asciiBtn.disabled = true;
+                }
+                
+                // 更新進度條
+                const progress = ((currentStep + 1) / steps.length) * 100;
+                progressFill.style.width = progress + '%';
+                
+                // 更新步驟列表
+                for (let i = 0; i <= 11; i++) {
+                    const stepElement = document.getElementById(`step${i}`);
+                    if (stepElement) {
+                        stepElement.classList.remove('active', 'completed', 'pending', 'waiting-blink');
+                        
+                        if (i === currentStep) {
+                            stepElement.classList.add('active');
+                            // 如果是步驟8，添加等待閃爍效果
+                            if (i === 8) {
+                                stepElement.classList.add('waiting-blink');
+                            }
+                        } else if (i < currentStep) {
+                            stepElement.classList.add('completed');
+                        } else {
+                            stepElement.classList.add('pending');
+                        }
+                    }
+                }
+                
+                // 檢查是否需要顯示異常步驟
+                if (currentStep === 7 && !testNormal) {
+                    // 在步驟7且測試異常時，準備顯示7-1
+                    setTimeout(() => {
+                        if (autoMode) {
+                            nextStep(); // 自動進入7-1
+                        }
+                    }, 3000);
+                }
+                
+                // 特殊效果處理
+                handleSpecialEffects();
+            }
         }
+        
+        function handleSpecialEffects() {
+            const deviceSide = document.getElementById('deviceSide');
+            const pcSide = document.getElementById('pcSide');
+            const dataFlow = document.getElementById('dataFlow');
+            
+            // 清除之前的特效
+            deviceSide.classList.remove('highlight');
+            pcSide.classList.remove('highlight');
+            dataFlow.classList.remove('device-to-pc', 'pc-to-device', 'notify-pc');
+            dataFlow.style.opacity = '0';
+            
+            switch (currentStep) {
+                case 5: // 測試模式中 - 不顯示數據流動畫
+                    break;
+                case 8: // 等待PC端發送指令
+                    pcSide.classList.add('highlight');
+                    dataFlow.textContent = '⏳ 等待指令發送...';
+                    dataFlow.style.opacity = '1';
+                    break;
+                case 9: // 校正治具接收指令正確 - PC到治具
+                    pcSide.classList.add('highlight');
+                    dataFlow.textContent = '📤 ASCII "1" 指令發送中...';
+                    dataFlow.classList.add('pc-to-device');
+                    dataFlow.style.opacity = '1';
+                    setTimeout(() => {
+                        deviceSide.classList.add('highlight');
+                    }, 1000);
+                    break;
+                case 10: // 資料傳送步驟 - 治具到PC
+                    deviceSide.classList.add('highlight');
+                    dataFlow.textContent = '📊 校正數據傳送中...';
+                    dataFlow.classList.add('device-to-pc');
+                    dataFlow.style.opacity = '1';
+                    setTimeout(() => {
+                        pcSide.classList.add('highlight');
+                    }, 1000);
+                    break;
+            }
+        }
+        
+        function setAutoMode() {
+            autoMode = true;
+            manualMode = false;
+            
+            document.getElementById('autoModeBtn').classList.remove('inactive');
+            document.getElementById('manualModeBtn').classList.add('inactive');
+            document.getElementById('nextStepBtn').style.display = 'none';
+            document.getElementById('modeInstruction').textContent = '選擇演示模式後，按下治具上的 CALI. 或 TEST 按鍵開始自動演示';
+        }
+        
+        function setManualMode() {
+            autoMode = false;
+            manualMode = true;
+            
+            document.getElementById('autoModeBtn').classList.add('inactive');
+            document.getElementById('manualModeBtn').classList.remove('inactive');
+            document.getElementById('nextStepBtn').style.display = 'inline-block';
+            document.getElementById('modeInstruction').textContent = '選擇演示模式後，按下治具上的 CALI. 或 TEST 按鍵開始，然後點擊「下一步」手動控制流程';
+        }
+        
+        function switchToNormalButtons() {
+            document.getElementById('caliBtn').textContent = 'CALI.';
+            document.getElementById('testBtn').textContent = 'TEST';
+            document.getElementById('caliBtn').onclick = startCalibration;
+            document.getElementById('testBtn').onclick = startTest;
+        }
+        
+        function switchToNGButtons() {
+            document.getElementById('caliBtn').textContent = 'START';
+            document.getElementById('testBtn').textContent = 'END';
+            document.getElementById('caliBtn').onclick = restartCalibration;
+            document.getElementById('testBtn').onclick = endProcess;
+        }
+        
+        function hideAbnormalStep() {
+            document.getElementById('step7-1').style.display = 'none';
+            document.getElementById('arrow7-1').style.display = 'none';
+        }
+        
+        function showAbnormalStep() {
+            document.getElementById('step7-1').style.display = 'block';
+            document.getElementById('arrow7-1').style.display = 'block';
+        }
+        
+        function setNormalTest() {
+            testNormal = true;
+            document.getElementById('normalTestBtn').classList.remove('inactive');
+            document.getElementById('abnormalTestBtn').classList.add('inactive');
+            hideAbnormalStep();
+        }
+        
+        function setAbnormalTest() {
+            testNormal = false;
+            document.getElementById('normalTestBtn').classList.add('inactive');
+            document.getElementById('abnormalTestBtn').classList.remove('inactive');
+        }
+        
+        function restartCalibration() {
+            if (!checkPrerequisites()) {
+                showError('無法重新開始：請確認已掃描QR CODE且PC端連線正常');
+                return;
+            }
+            
+            switchToNormalButtons();
+            hideAbnormalStep();
+            fromAbnormalPath = false; // 重置異常路徑標記
+            stopAnimation();
+            currentStep = 1; // 跳到步驟1重新開始校正
+            updateDisplay();
+            
+            if (autoMode) {
+                startAutoAnimation();
+            }
+        }
+        
+        function endProcess() {
+            switchToNormalButtons();
+            hideAbnormalStep();
+            stopAnimation();
+            fromAbnormalPath = true; // 標記來自異常路徑
+            currentStep = 11; // 直接跳到結束
+            updateDisplay();
+        }
+        
+        function startAutoAnimation() {
+            if (autoMode) {
+                animationTimer = setInterval(() => {
+                    // 如果到達步驟8，停止自動動畫，等待手動點擊
+                    if (currentStep === 8) {
+                        stopAnimation();
+                        return;
+                    }
+                    
+                    if (currentStep < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }, 3000);
+            }
+        }
+        
+        function stopAnimation() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+            }
+        }
+        
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                // 檢查是否在步驟7且設定為測試異常
+                if (currentStep === 7 && !testNormal) {
+                    // 跳轉到步驟7-1（測試結果NG）
+                    currentStep = '7-1';
+                    updateDisplayForNG();
+                    return;
+                }
+                
+                currentStep++;
+                
+                // 如果到達步驟8，停止自動進行，等待手動點擊ASCII按鍵
+                if (currentStep === 8) {
+                    updateDisplay();
+                    stopAnimation(); // 確保停止自動動畫
+                    return;
+                }
+                
+                // 如果正常流程到達步驟11，重置異常路徑標記
+                if (currentStep === 11) {
+                    fromAbnormalPath = false;
+                }
+                
+                updateDisplay();
+            }
+        }
+        
+        function updateDisplayForNG() {
+            const deviceStatus = document.getElementById('deviceStatus');
+            const pcStatus = document.getElementById('pcStatus');
+            const currentStatus = document.getElementById('currentStatus');
+            
+            deviceStatus.textContent = step7_1.device;
+            pcStatus.textContent = step7_1.pc;
+            currentStatus.innerHTML = step7_1.status;
+            
+            // 顯示異常步驟
+            showAbnormalStep();
+            
+            // 更新步驟顯示
+            document.getElementById('step7-1').classList.add('active');
+            
+            // 切換按鍵
+            switchToNGButtons();
+        }
+        
+        function sendAsciiCommand() {
+            if (currentStep === 8) {
+                currentStep = 9;
+                updateDisplay();
+                
+                // 繼續自動播放剩餘步驟
+                if (autoMode) {
+                    setTimeout(() => {
+                        currentStep = 10;
+                        updateDisplay();
+                        setTimeout(() => {
+                            currentStep = 11;
+                            updateDisplay();
+                        }, 3000);
+                    }, 3000);
+                }
+            }
+        }
+        
+        function reset() {
+            stopAnimation();
+            currentStep = -1;
+            fromAbnormalPath = false; // 重置異常路徑標記
+            switchToNormalButtons();
+            hideAbnormalStep();
+            document.getElementById('deviceStatus').textContent = '待機中...';
+            document.getElementById('pcStatus').textContent = '連線正常';
+            document.getElementById('currentStatus').innerHTML = '準備開始 - 選擇 CALI. 或 TEST 模式<br><small>開始準備中 - CALI.またはTESTモードを選択</small>';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('asciiBtn').disabled = true;
+            
+            // 重置所有步驟
+            for (let i = 0; i <= 11; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                if (stepElement) {
+                    stepElement.classList.remove('active', 'completed', 'waiting-blink');
+                    stepElement.classList.add('pending');
+                }
+            }
+            
+            // 重置7-1步驟
+            const step7_1Element = document.getElementById('step7-1');
+            if (step7_1Element) {
+                step7_1Element.classList.remove('active', 'completed');
+                step7_1Element.classList.add('pending');
+            }
+            
+            // 清除特效
+            document.getElementById('deviceSide').classList.remove('highlight');
+            document.getElementById('pcSide').classList.remove('highlight');
+            document.getElementById('dataFlow').style.opacity = '0';
+        }
+        
+        function startCalibration() {
+            if (!checkPrerequisites()) {
+                showError('無法開始校正：請確認已掃描QR CODE且PC端連線正常');
+                return;
+            }
+            
+            stopAnimation(); // 停止之前的動畫
+            fromAbnormalPath = false; // 重置異常路徑標記
+            currentStep = 0;
+            updateDisplay();
+            
+            if (autoMode) {
+                startAutoAnimation();
+            }
+        }
+        
+        function startTest() {
+            if (!checkPrerequisites()) {
+                showError('無法開始測試：請確認已掃描QR CODE且PC端連線正常');
+                return;
+            }
+            
+            stopAnimation(); // 停止之前的動畫
+            fromAbnormalPath = false; // 重置異常路徑標記
+            currentStep = 5; // 直接從測試模式開始
+            updateDisplay();
+            
+            if (autoMode) {
+                startAutoAnimation();
+            }
+        }
+        
     </script>
 </body>
 </html>
-Rename HTML to index.html
