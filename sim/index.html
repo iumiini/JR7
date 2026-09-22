@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="ja" data-lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>[hidden]{display:none!important}img{max-width:100%}</style>
-<title>JR7 5.5R 校正模擬</title>
+<title>JR7 5.5R 校正シミュレーション</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -113,71 +113,96 @@ tr:last-child td{border-bottom:none}
 footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 
 @media (max-width:760px){.stats{grid-template-columns:1fr 1fr}.cards,.two{grid-template-columns:1fr}.grp-btns{margin-left:0}}
+
+html:not([data-lang="zh"]) [data-l="zh"]{display:none!important}
+html[data-lang="zh"] [data-l="ja"]{display:none!important}
+.titlebar{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap}
+.langbtn{font-weight:700;border-color:var(--accent);color:var(--accent)}
+.ctrl{flex-wrap:nowrap}
+.ctrl .clock{min-width:170px}
+.ctrl .lead{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.ctrl2{justify-content:space-between;flex-wrap:wrap}
+.ctrl2 .grp-btns{margin-left:0!important}
+.wrap-cell{white-space:normal!important}
 </style>
 
 </head>
 <body>
 <div class="wrap">
 <header>
-  <div class="eyebrow">JR7 · G030 v1.62.2 + F407 V37 · 理想情況：每個溫度 1 輪就合格</div>
-  <h1>JR7 校正流程，模擬加熱器 10R／5.5R</h1>
-  <p class="lede">須優先了解條件設定為：<b>5.5R 是 R50 改成 82.5 Ω、韌體不動</b>。模擬整個流程如下：<br>REF1 → REF2 → CALI 80/100/120/140°C → 寫入 → 降溫 → HS1～HS4 測試 → 判定存檔。</p>
-  <div class="banner"><span>⚠</span><span><b>模擬推估，未經 5.5R 實測。</b>流程與固定時間直接取自程式；熱行為由 10R 的舊 log（2023-10-12）擬合，5.5R 的散熱特性假設與 10R 相同。數字用來說明「會發生什麼、差多少」，不是量測值。</span></div>
+  <div class="eyebrow"><span data-l="zh">JR7 · G030 v1.62.2 + F407 V37 · 理想情況：每個溫度 1 輪就合格</span><span data-l="ja">JR7 · G030 v1.62.2 + F407 V37 · 理想条件：各温度 1 回で合格</span></div>
+  <div class="titlebar">
+    <h1><span data-l="zh">JR7 校正流程，模擬加熱器 10R／5.5R</span><span data-l="ja">JR7 校正フロー：ヒーター 10R／5.5R シミュレーション</span></h1>
+    <button type="button" id="langBtn" class="langbtn"><span data-l="zh">日文版</span><span data-l="ja">中文版</span></button>
+  </div>
+  <p class="lede" data-l="zh">須優先了解條件設定為：<b>5.5R 是 R50 改成 82.5 Ω、韌體不動</b>。模擬整個流程如下：<br>REF1 → REF2 → CALI 80/100/120/140°C → 寫入 → 降溫 → HS1～HS4 測試 → 判定存檔。</p>
+  <p class="lede" data-l="ja">前提条件：<b>5.5R は R50 を 82.5 Ω に変更し、ファームウェアは変更しない</b>。シミュレーションする全体の流れは以下のとおりです：<br>REF1 → REF2 → CALI 80/100/120/140°C → 書き込み → 冷却 → HS1～HS4 テスト → 判定・保存。</p>
+  <div class="banner"><span>⚠</span><span data-l="zh"><b>模擬推估，未經 5.5R 實測。</b>流程與固定時間直接取自程式；熱行為由 10R 的舊 log（2023-10-12）擬合，5.5R 的散熱特性假設與 10R 相同。數字用來說明「會發生什麼、差多少」，不是量測值。</span><span data-l="ja"><b>シミュレーションによる推定であり、5.5R の実測ではありません。</b>フローと固定時間はプログラムから直接取得しています。熱挙動は 10R の過去ログ（2023-10-12）から近似し、5.5R の放熱特性は 10R と同じと仮定しています。数値は「何が起きるか・どの程度差があるか」を示すためのもので、測定値ではありません。</span></div>
 </header>
 <section>
-  <h2>結論摘要</h2>
+  <h2><span data-l="zh">結論摘要</span><span data-l="ja">結論サマリー</span></h2>
   <div class="summary">
-    <p class="big">加熱器改為 5.5R 後，校正流程完全不變，且理想情況下，每個溫度 1 輪就合格，總時間預估<em id="sumLead">與 10R 相同</em>。</p>
-    <ul>
-      <li>整個校正加測試約 <b id="sumTot">—</b>，其中約 <b id="sumFix">—</b> 是程式固定的時間（每輪 5 秒的穩定確認、每段 450 筆溫度取樣等），與加熱器無關。</li>
-      <li>5.5R 升溫較快（rapid 共省約 <b id="sumR">—</b>）。但 learning 的每次脈衝都是 50 ms，相同時間上 5.5R 溫度上升較高，要等更久才降回目標 −5°C，這是假設 5.5R 與 10R 散熱比相同，所以反而多花約 <b id="sumL">—</b>，兩者大致抵銷（見下表）。</li>
-      <li>若 5.5R 的散熱比 10R 快或慢 30%，差距範圍約 <b id="sumRange">—</b>。</li>
+    <p class="big" data-l="zh">加熱器改為 5.5R 後，校正流程完全不變，且理想情況下，每個溫度 1 輪就合格，總時間預估<em data-k="sumLead">與 10R 相同</em>。</p>
+    <p class="big" data-l="ja">ヒーターを 5.5R に変更しても校正フローはまったく変わらず、理想条件では各温度 1 回で合格し、総時間は<em data-k="sumLead">10R と同じ</em>と推定されます。</p>
+    <ul data-l="zh">
+      <li>整個校正加測試約 <b data-k="sumTot">—</b>，其中約 <b data-k="sumFix">—</b> 是程式固定的時間（每輪 5 秒的穩定確認、每段 450 筆溫度取樣等），與加熱器無關。</li>
+      <li>5.5R 升溫較快（rapid 共省約 <b data-k="sumR">—</b>）。但 learning 的每次脈衝都是 50 ms，相同時間上 5.5R 溫度上升較高，要等更久才降回目標 −5°C，這是假設 5.5R 與 10R 散熱比相同，所以反而多花約 <b data-k="sumL">—</b>，兩者大致抵銷（見下表）。</li>
+      <li>若 5.5R 的散熱比 10R 快或慢 30%，差距範圍約 <b data-k="sumRange">—</b>。</li>
       <li><b>需要實測確認的風險</b>：每次加熱脈衝的能量是 1.82 倍，溫度漣波和過衝會變大。若因此讓穩定判斷（±1.2°C）多跑一輪，就會多約 6～7 秒，影響大於加熱速度本身。</li>
     </ul>
-    <div class="tbl"><table><thead><tr><th>為什麼總時間相同（CALI 4 段＋HS 4 段，共 8 次升溫）</th><th>ON time</th><th class="n">10R</th><th class="n">5.5R</th><th class="n">5.5R 相對 10R</th></tr></thead><tbody>
-      <tr><td><b>rapid</b>：加熱到目標</td><td>閉迴路計算，5.5R 較短</td><td class="n" id="wr10">—</td><td class="n" id="wr55">—</td><td class="n" id="wrd">—</td></tr>
-      <tr><td><b>learning</b>：打 6 次脈衝，每次等降回目標 −5°C</td><td>兩邊都截在 50 ms，相同</td><td class="n" id="wl10">—</td><td class="n" id="wl55">—</td><td class="n" id="wld">—</td></tr>
-      <tr><td><b>其餘</b>：REF 5 s 逾時、steady 5 s、450 筆取樣、降溫等</td><td>—</td><td class="n" id="wf10">—</td><td class="n" id="wf55">—</td><td class="n" id="wfd">—</td></tr>
-      <tr><td><b>全流程</b></td><td></td><td class="n" id="wt10">—</td><td class="n" id="wt55">—</td><td class="n" id="wtd">—</td></tr>
+    <ul data-l="ja">
+      <li>校正＋テスト全体で約 <b data-k="sumTot">—</b>、そのうち約 <b data-k="sumFix">—</b> はプログラムで決まった固定時間（各ラウンド 5 秒の安定確認、各段 450 点の温度サンプリングなど）で、ヒーターとは無関係です。</li>
+      <li>5.5R は昇温が速い（rapid で合計約 <b data-k="sumR">—</b> 短縮）。しかし learning の各パルスはどちらも 50 ms で、同じ時間でも 5.5R の方が温度上昇が大きく、目標 −5°C まで下がるのを長く待つ必要があります（5.5R と 10R の放熱が同じと仮定）。そのため逆に約 <b data-k="sumL">—</b> 長くかかり、両者はほぼ相殺されます（下表参照）。</li>
+      <li>5.5R の放熱が 10R より 30% 速い／遅い場合、差の範囲は約 <b data-k="sumRange">—</b> です。</li>
+      <li><b>実測で確認が必要なリスク</b>：加熱パルス 1 回あたりのエネルギーは 1.82 倍で、温度リップルとオーバーシュートが大きくなります。これにより安定判定（±1.2°C）で 1 ラウンド増えると約 6～7 秒増加し、加熱速度そのものより影響が大きくなります。</li>
+    </ul>
+    <div class="tbl"><table><thead><tr><th><span data-l="zh">為什麼總時間相同（CALI 4 段＋HS 4 段，共 8 次升溫）</span><span data-l="ja">総時間が同じになる理由（CALI 4 段＋HS 4 段、計 8 回の昇温）</span></th><th>ON time</th><th class="n">10R</th><th class="n">5.5R</th><th class="n"><span data-l="zh">5.5R 相對 10R</span><span data-l="ja">5.5R／10R 比較</span></th></tr></thead><tbody>
+      <tr><td><b>rapid</b>：<span data-l="zh">加熱到目標</span><span data-l="ja">目標まで加熱</span></td><td><span data-l="zh">閉迴路計算，5.5R 較短</span><span data-l="ja">閉ループで計算、5.5R が短い</span></td><td class="n" id="wr10">—</td><td class="n" id="wr55">—</td><td class="n" id="wrd">—</td></tr>
+      <tr><td><b>learning</b>：<span data-l="zh">打 6 次脈衝，每次等降回目標 −5°C</span><span data-l="ja">パルス 6 回、毎回目標 −5°C まで冷却待ち</span></td><td><span data-l="zh">兩邊都截在 50 ms，相同</span><span data-l="ja">両方とも 50 ms で打ち切り、同じ</span></td><td class="n" id="wl10">—</td><td class="n" id="wl55">—</td><td class="n" id="wld">—</td></tr>
+      <tr><td><b><span data-l="zh">其餘</span><span data-l="ja">その他</span></b>：<span data-l="zh">REF 5 s 逾時、steady 5 s、450 筆取樣、降溫等</span><span data-l="ja">REF 5 s タイムアウト、steady 5 s、450 点サンプリング、冷却など</span></td><td>—</td><td class="n" id="wf10">—</td><td class="n" id="wf55">—</td><td class="n" id="wfd">—</td></tr>
+      <tr><td><b><span data-l="zh">全流程</span><span data-l="ja">全体</span></b></td><td></td><td class="n" id="wt10">—</td><td class="n" id="wt55">—</td><td class="n" id="wtd">—</td></tr>
     </tbody></table></div>
   </div>
 </section>
 <div class="player">
   <div class="ctrl">
-    <button id="play" type="button">▶ 播放</button>
-    <select id="speed" class="sel" aria-label="播放速度"><option value="2">2×</option><option value="5">5×</option><option value="10" selected>10×</option><option value="30">30×</option></select>
+    <button id="play" type="button">▶</button>
+    <select id="speed" class="sel" aria-label="speed"><option value="2">2×</option><option value="5">5×</option><option value="10" selected>10×</option><option value="30">30×</option></select>
     <span class="clock" id="clock">0.0 s</span>
     <span class="lead" id="lead">—</span>
-    <div class="grp-btns" role="group" aria-label="顯示加熱器">
+  </div>
+  <div class="ctrl ctrl2">
+    <div class="grp-btns" role="group" aria-label="heater">
       <button type="button" data-h="both" aria-pressed="true">10R＋5.5R</button>
-      <button type="button" data-h="10" aria-pressed="false">只看 10R</button>
-      <button type="button" data-h="55" aria-pressed="false">只看 5.5R</button>
+      <button type="button" data-h="10" aria-pressed="false"><span data-l="zh">只看 10R</span><span data-l="ja">10R のみ</span></button>
+      <button type="button" data-h="55" aria-pressed="false"><span data-l="zh">只看 5.5R</span><span data-l="ja">5.5R のみ</span></button>
     </div>
-    <div class="grp-btns" role="group" aria-label="檢視範圍">
-      <button type="button" data-v="all" aria-pressed="true">全程</button>
-      <button type="button" data-v="cali" aria-pressed="false">校正段</button>
-      <button type="button" data-v="test" aria-pressed="false">測試段</button>
-      <button type="button" data-v="follow" aria-pressed="false">跟隨游標 ±15 s</button>
+    <div class="grp-btns view-btns" role="group" aria-label="view">
+      <button type="button" data-v="all" aria-pressed="true"><span data-l="zh">全程</span><span data-l="ja">全体</span></button>
+      <button type="button" data-v="cali" aria-pressed="false"><span data-l="zh">校正段</span><span data-l="ja">校正</span></button>
+      <button type="button" data-v="test" aria-pressed="false"><span data-l="zh">測試段</span><span data-l="ja">テスト</span></button>
+      <button type="button" data-v="follow" aria-pressed="false"><span data-l="zh">跟隨游標 ±15 s</span><span data-l="ja">カーソル追従 ±15 s</span></button>
     </div>
   </div>
-  <input type="range" id="t" min="0" max="100" step="0.02" value="60" aria-label="經過時間（秒）">
+  <input type="range" id="t" min="0" max="100" step="0.02" value="60" aria-label="time (s)">
 </div>
 
 <section style="padding-top:12px">
   <div class="panel">
     <div class="legend">
-      <span><i class="sw" style="background:var(--s1);height:3px"></i>10R 加熱元件溫度</span>
-      <span><i class="sw" style="background:var(--s3);height:3px"></i>5.5R 加熱元件溫度</span>
-      <span><i class="sw" style="background:var(--ink2)"></i>rapid 升溫</span>
+      <span><i class="sw" style="background:var(--s1);height:3px"></i><span data-l="zh">10R 加熱元件溫度</span><span data-l="ja">10R ヒーター素子温度</span></span>
+      <span><i class="sw" style="background:var(--s3);height:3px"></i><span data-l="zh">5.5R 加熱元件溫度</span><span data-l="ja">5.5R ヒーター素子温度</span></span>
+      <span><i class="sw" style="background:var(--ink2)"></i><span data-l="zh">rapid 升溫</span><span data-l="ja">rapid 昇温</span></span>
       <span><i class="sw" style="background:var(--ink2);opacity:.5"></i>learning</span>
       <span><i class="sw" style="background:var(--ink2);opacity:.2"></i>steady</span>
-      <span><i class="sw" style="background:var(--cool);opacity:.7"></i>加熱關閉・降溫</span>
+      <span><i class="sw" style="background:var(--cool);opacity:.7"></i><span data-l="zh">加熱關閉・降溫</span><span data-l="ja">加熱オフ・冷却</span></span>
       <span><i class="sw" style="background:repeating-linear-gradient(90deg,var(--ink2) 0 2px,transparent 2px 5px);opacity:.5"></i>steadyLow（−5°C）</span>
-      <span><i class="sw" style="background:var(--accent);height:4px"></i>F407 收 450 筆</span>
+      <span><i class="sw" style="background:var(--accent);height:4px"></i><span data-l="zh">F407 收 450 筆</span><span data-l="ja">F407 450 点収集</span></span>
     </div>
-    <div class="chart-scroll"><svg id="svg" viewBox="0 0 960 500" role="img" aria-label="10R 與 5.5R 校正流程溫度與階段模擬"></svg></div>
+    <div class="chart-scroll"><svg id="svg" viewBox="0 0 960 500" role="img" aria-label="10R / 5.5R"></svg></div>
   </div>
-  <p class="sub">曲線是<b>加熱元件</b>的溫度，包含每次加熱脈衝造成的鋸齒。兩者的平均溫度都被韌體控制在同一個目標上，所以平均看起來一樣高；差別在每次脈衝衝上去的幅度，5.5R 的鋸齒明顯比較大。請用「跟隨游標 ±15 s」放大看。F407 的判定用的是平均溫度。</p>
+  <p class="sub" data-l="zh">曲線是<b>加熱元件</b>的溫度，包含每次加熱脈衝造成的鋸齒。兩者的平均溫度都被韌體控制在同一個目標上，所以平均看起來一樣高；差別在每次脈衝衝上去的幅度，5.5R 的鋸齒明顯比較大。請用「跟隨游標 ±15 s」放大看。F407 的判定用的是平均溫度。</p>
+  <p class="sub" data-l="ja">曲線は<b>ヒーター素子</b>の温度で、各加熱パルスによるのこぎり波を含みます。両者の平均温度はファームウェアにより同じ目標に制御されるため、平均では同じ高さに見えます。違いは各パルスで上がる幅で、5.5R ののこぎり波の方が明らかに大きくなります。「カーソル追従 ±15 s」で拡大してご確認ください。F407 の判定は平均温度を使用します。</p>
 </section>
 
 <section>
@@ -187,37 +212,58 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
   </div>
 </section>
 
-<section>
+<section data-l="zh">
   <h2>各模式在做什麼</h2>
   <div class="tbl"><table><thead><tr><th>模式</th><th>在做什麼</th><th>10R 與 5.5R 的差異</th></tr></thead><tbody>
-    <tr><td><b>啟動檢查</b></td><td style="white-space:normal">開始加熱前先關閉加熱約 13 ms，檢查加熱器是否開路／短路</td><td style="white-space:normal">相同</td></tr>
-    <tr><td><b>rapid 升溫</b></td><td style="white-space:normal">每次最長加熱 100 ms，再量 PA5，重複到溫度到達目標</td><td style="white-space:normal">5.5R 升溫快，時間較短</td></tr>
-    <tr><td><b>learning 學習</b></td><td style="white-space:normal">① 等溫度降到目標 −5°C → ② 加熱 50 ms → ③ 再等降回目標 −5°C；共 6 次（累計 ON time 超過 300 ms），用來量測升溫與降溫速度</td><td style="white-space:normal">ON time 相同；5.5R 每次升得較多，③ 等降溫較久，時間較長（溫度越低差越多）</td></tr>
-    <tr><td><b>steady 穩定</b></td><td style="white-space:normal">以每次最長 50 ms 的加熱維持在目標溫度；校正時固定 5 秒後判定，測試時維持 20 秒</td><td style="white-space:normal">時間相同；5.5R 溫度鋸齒較大，平均溫度相同</td></tr>
-    <tr><td><b>steadyLow 待機</b></td><td style="white-space:normal">測試時 steady 滿 20 秒後，目標降 5°C 待機，F407 繼續收集溫度直到 450 筆</td><td style="white-space:normal">相同</td></tr>
-    <tr><td><b>加熱關閉・降溫</b></td><td style="white-space:normal">校正寫入後停止加熱，自然降到 60°C 以下才開始測試；流程結束後也是此狀態</td><td style="white-space:normal">假設散熱相同，時間相同</td></tr>
-    <tr><td><b>等待（不加熱）</b></td><td style="white-space:normal">REF1 前幾輪的目標低於室溫，不需加熱，等 5 秒逾時後提高目標再試</td><td style="white-space:normal">相同</td></tr>
+    <tr><td><b>啟動檢查</b></td><td class="wrap-cell">開始加熱前先關閉加熱約 13 ms，檢查加熱器是否開路／短路</td><td class="wrap-cell">相同</td></tr>
+    <tr><td><b>rapid 升溫</b></td><td class="wrap-cell">每次最長加熱 100 ms，再量 PA5，重複到溫度到達目標</td><td class="wrap-cell">5.5R 升溫快，時間較短</td></tr>
+    <tr><td><b>learning 學習</b></td><td class="wrap-cell">① 等溫度降到目標 −5°C → ② 加熱 50 ms → ③ 再等降回目標 −5°C；共 6 次（累計 ON time 超過 300 ms），用來量測升溫與降溫速度</td><td class="wrap-cell">ON time 相同；5.5R 每次升得較多，③ 等降溫較久，時間較長（溫度越低差越多）</td></tr>
+    <tr><td><b>steady 穩定</b></td><td class="wrap-cell">以每次最長 50 ms 的加熱維持在目標溫度；校正時固定 5 秒後判定，測試時維持 20 秒</td><td class="wrap-cell">時間相同；5.5R 溫度鋸齒較大，平均溫度相同</td></tr>
+    <tr><td><b>steadyLow 待機</b></td><td class="wrap-cell">測試時 steady 滿 20 秒後，目標降 5°C 待機，F407 繼續收集溫度直到 450 筆</td><td class="wrap-cell">相同</td></tr>
+    <tr><td><b>加熱關閉・降溫</b></td><td class="wrap-cell">校正寫入後停止加熱，自然降到 60°C 以下才開始測試；流程結束後也是此狀態</td><td class="wrap-cell">假設散熱相同，時間相同</td></tr>
+    <tr><td><b>等待（不加熱）</b></td><td class="wrap-cell">REF1 前幾輪的目標低於室溫，不需加熱，等 5 秒逾時後提高目標再試</td><td class="wrap-cell">相同</td></tr>
+  </tbody></table></div>
+</section>
+<section data-l="ja">
+  <h2>各モードの動作</h2>
+  <div class="tbl"><table><thead><tr><th>モード</th><th>動作内容</th><th>10R と 5.5R の違い</th></tr></thead><tbody>
+    <tr><td><b>起動チェック</b></td><td class="wrap-cell">加熱開始前に約 13 ms 加熱をオフにし、ヒーターの断線／短絡を確認</td><td class="wrap-cell">同じ</td></tr>
+    <tr><td><b>rapid 昇温</b></td><td class="wrap-cell">1 回最大 100 ms 加熱して PA5 を測定し、目標温度に達するまで繰り返す</td><td class="wrap-cell">5.5R は昇温が速く、時間が短い</td></tr>
+    <tr><td><b>learning 学習</b></td><td class="wrap-cell">① 目標 −5°C まで冷えるのを待つ → ② 50 ms 加熱 → ③ 再び目標 −5°C まで冷えるのを待つ；計 6 回（累計 ON time が 300 ms 超）、昇温・冷却速度を測定</td><td class="wrap-cell">ON time は同じ；5.5R は 1 回の上昇が大きく、③ の冷却待ちが長いため時間が長い（温度が低いほど差が大きい）</td></tr>
+    <tr><td><b>steady 安定</b></td><td class="wrap-cell">1 回最大 50 ms の加熱で目標温度を維持；校正時は 5 秒後に判定、テスト時は 20 秒維持</td><td class="wrap-cell">時間は同じ；5.5R はのこぎり波が大きいが、平均温度は同じ</td></tr>
+    <tr><td><b>steadyLow 待機</b></td><td class="wrap-cell">テスト時、steady が 20 秒続いた後に目標を 5°C 下げて待機し、F407 は 450 点になるまで温度を収集</td><td class="wrap-cell">同じ</td></tr>
+    <tr><td><b>加熱オフ・冷却</b></td><td class="wrap-cell">校正の書き込み後に加熱を停止し、60°C 以下まで自然冷却してからテスト開始；フロー終了後もこの状態</td><td class="wrap-cell">放熱が同じと仮定し、時間は同じ</td></tr>
+    <tr><td><b>待機（加熱なし）</b></td><td class="wrap-cell">REF1 の最初の数ラウンドは目標が室温より低いため加熱不要；5 秒タイムアウト後に目標を上げて再試行</td><td class="wrap-cell">同じ</td></tr>
   </tbody></table></div>
 </section>
 
 <section>
-  <h2>ON time：哪些相同、哪些不同</h2>
-  <p class="sub">韌體是閉迴路，每次加熱的 ON time =（距離目標的電壓差）÷（量到的升溫速度），再截在上限內。5.5R 升溫速度快，算出來的 ON time 就短；只有算出來超過上限、被截斷的脈衝，兩邊才相同。</p>
-  <div class="tbl"><table><thead><tr><th>階段</th><th>ON time 計算</th><th>上限</th><th>10R</th><th>5.5R</th><th>結果</th></tr></thead><tbody>
+  <h2><span data-l="zh">ON time：哪些相同、哪些不同</span><span data-l="ja">ON time：同じもの・異なるもの</span></h2>
+  <p class="sub" data-l="zh">韌體是閉迴路，每次加熱的 ON time =（距離目標的電壓差）÷（量到的升溫速度），再截在上限內。5.5R 升溫速度快，算出來的 ON time 就短；只有算出來超過上限、被截斷的脈衝，兩邊才相同。</p>
+  <p class="sub" data-l="ja">ファームウェアは閉ループで、各加熱の ON time =（目標までの電圧差）÷（測定した昇温速度）を計算し、上限で打ち切ります。5.5R は昇温が速いため計算上の ON time は短くなり、上限を超えて打ち切られたパルスのみ両者で同じになります。</p>
+  <div class="tbl" data-l="zh"><table><thead><tr><th>階段</th><th>ON time 計算</th><th>上限</th><th>10R</th><th>5.5R</th><th>結果</th></tr></thead><tbody>
     <tr><td>rapid 第一次</td><td>用預估速度計算</td><td class="mono">100 ms</td><td>截在 100 ms</td><td>截在 100 ms</td><td><b>相同</b>，5.5R 升得較多</td></tr>
     <tr><td>rapid 之後</td><td>用實測速度計算</td><td class="mono">100 ms</td><td>較長</td><td>較短</td><td>兩者都停在目標，5.5R 較早到</td></tr>
     <tr><td>learning 每次</td><td>加熱到目標 +5°C 所需時間</td><td class="mono">50 ms</td><td>需約 220 ms → 截在 50 ms</td><td>需約 95 ms → 截在 50 ms</td><td><b>相同</b>，5.5R 升得較多，降溫等待較久</td></tr>
     <tr><td>steady 每次</td><td>加熱到目標 +3°C 所需時間</td><td class="mono">50 ms</td><td>截在 50 ms</td><td>截在 50 ms</td><td><b>相同</b>，5.5R 鋸齒較大，平均溫度相同</td></tr>
   </tbody></table></div>
-  <p class="sub">下圖是<b>被上限截斷、ON time 相同時</b>的單次脈衝比較：同樣時間內 5.5R 注入 1.82 倍的能量，但散熱量相同，所以淨升溫是 10R 的 1.82 倍以上，溫度越高差得越多。</p>
+  <div class="tbl" data-l="ja"><table><thead><tr><th>段階</th><th>ON time の計算</th><th>上限</th><th>10R</th><th>5.5R</th><th>結果</th></tr></thead><tbody>
+    <tr><td>rapid 1 回目</td><td>推定速度で計算</td><td class="mono">100 ms</td><td>100 ms で打ち切り</td><td>100 ms で打ち切り</td><td><b>同じ</b>、5.5R の方が大きく上昇</td></tr>
+    <tr><td>rapid 2 回目以降</td><td>実測速度で計算</td><td class="mono">100 ms</td><td>長い</td><td>短い</td><td>どちらも目標で停止、5.5R が早く到達</td></tr>
+    <tr><td>learning 各回</td><td>目標 +5°C までの加熱に必要な時間</td><td class="mono">50 ms</td><td>約 220 ms 必要 → 50 ms で打ち切り</td><td>約 95 ms 必要 → 50 ms で打ち切り</td><td><b>同じ</b>、5.5R の方が大きく上昇し、冷却待ちが長い</td></tr>
+    <tr><td>steady 各回</td><td>目標 +3°C までの加熱に必要な時間</td><td class="mono">50 ms</td><td>50 ms で打ち切り</td><td>50 ms で打ち切り</td><td><b>同じ</b>、5.5R はのこぎり波が大きいが、平均温度は同じ</td></tr>
+  </tbody></table></div>
+  <p class="sub" data-l="zh">下圖是<b>被上限截斷、ON time 相同時</b>的單次脈衝比較：同樣時間內 5.5R 注入 1.82 倍的能量，但散熱量相同，所以淨升溫是 10R 的 1.82 倍以上，溫度越高差得越多。</p>
+  <p class="sub" data-l="ja">下図は<b>上限で打ち切られ、ON time が同じ場合</b>の単一パルス比較です。同じ時間で 5.5R は 1.82 倍のエネルギーを投入しますが、放熱量は同じため、正味の上昇は 10R の 1.82 倍以上となり、温度が高いほど差が大きくなります。</p>
   <div class="two">
-    <div class="panel"><div class="chart-scroll"><svg id="pulse" viewBox="0 0 460 250" role="img" aria-label="同一次 100 ms 脈衝的升溫比較" style="min-width:0"></svg></div></div>
-    <div class="tbl"><table><thead><tr><th>起始溫度</th><th class="n">脈衝</th><th class="n">10R 升溫</th><th class="n">5.5R 升溫</th><th class="n">倍數</th></tr></thead><tbody id="pt"></tbody></table></div>
+    <div class="panel"><div class="chart-scroll"><svg id="pulse" viewBox="0 0 460 250" role="img" aria-label="100 ms pulse" style="min-width:0"></svg></div></div>
+    <div class="tbl"><table><thead><tr><th><span data-l="zh">起始溫度</span><span data-l="ja">開始温度</span></th><th class="n"><span data-l="zh">脈衝</span><span data-l="ja">パルス</span></th><th class="n"><span data-l="zh">10R 升溫</span><span data-l="ja">10R 上昇</span></th><th class="n"><span data-l="zh">5.5R 升溫</span><span data-l="ja">5.5R 上昇</span></th><th class="n"><span data-l="zh">倍數</span><span data-l="ja">倍率</span></th></tr></thead><tbody id="pt"></tbody></table></div>
   </div>
-  <p class="sub">所以 1.82 倍的差異只表現在<b>被截斷的單次脈衝</b>：rapid 第一次升得比較多，learning 和 steady 每次衝得比較高（主圖中 5.5R 的鋸齒較大）。最終溫度兩者相同，因為韌體到了目標就停。</p>
+  <p class="sub" data-l="zh">所以 1.82 倍的差異只表現在<b>被截斷的單次脈衝</b>：rapid 第一次升得比較多，learning 和 steady 每次衝得比較高（主圖中 5.5R 的鋸齒較大）。最終溫度兩者相同，因為韌體到了目標就停。</p>
+  <p class="sub" data-l="ja">したがって 1.82 倍の差は<b>打ち切られた単一パルス</b>にのみ現れます：rapid の 1 回目の上昇が大きく、learning と steady では毎回の上昇が大きくなります（メイン図の 5.5R ののこぎり波が大きい）。ファームウェアは目標に達すると停止するため、最終温度は両者同じです。</p>
 </section>
 <section>
-  <h2>結論</h2>
+  <h2><span data-l="zh">結論</span><span data-l="ja">結論</span></h2>
   <div class="summary" id="endSummary"></div>
 </section>
 </div>
@@ -226,6 +272,11 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
 (function(){
   const ALPHA = 0.00114, G_FIT = 72.7, V_FIT = 12.3, R_FIT = 9.8;
   const $ = id => document.getElementById(id) || document.createElement('div');
+  let LANG = 'ja';
+  const tx = (zh, ja) => LANG==='ja' ? ja : zh;
+  const setK = (k, v) => document.querySelectorAll('[data-k="'+k+'"]').forEach(e=>e.textContent=v);
+  const MSGJ = {'溫度 < 65°C':'温度 < 65°C','溫度 < 60°C → 開始測試':'温度 < 60°C → テスト開始','[CALI]HS_STOP（收滿 450 筆）':'[CALI]HS_STOP（450 点収集完了）','TestComplete → 判定、存 CSV':'TestComplete → 判定・CSV 保存'};
+  const tm = m => LANG==='ja' ? (MSGJ[m]||m) : m;
   function pa5(rh,r50){ const vh=3.3*rh/(r50+rh), vp=vh*100/101, rin=17.8e3+20e3*1e3/21e3, g=390e3/rin; return vp*(1+g)-(3.3/21)*g; }
 
   function simulate(kind, P, shared){
@@ -396,13 +447,15 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
   const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   let S10,S55,TMAX,view=[0,100],viewMode='all',t=60,playing=false,last=0,raf=0;
   let gScaled, gOver, cursor, d10, d55, tag10, tag55, SH='both';
-  const PHN = {start:'啟動檢查',rapid:'rapid 升溫',learn:'learning 學習',steady:'steady 穩定',low:'steadyLow 待機（−5°C）',wait:'等待（不加熱）',cool:'加熱關閉・降溫',f407:'F407 處理中'};
+  const PHN_Z = {start:'啟動檢查',rapid:'rapid 升溫',learn:'learning 學習',steady:'steady 穩定',low:'steadyLow 待機（−5°C）',wait:'等待（不加熱）',cool:'加熱關閉・降溫',f407:'F407 處理中'};
+  const PHN_J = {start:'起動チェック',rapid:'rapid 昇温',learn:'learning 学習',steady:'steady 安定',low:'steadyLow 待機（−5°C）',wait:'待機（加熱なし）',cool:'加熱オフ・冷却',f407:'F407 処理中'};
   function placeTag(g, S, x, show, below){
     if (!show){ g.setAttribute('visibility','hidden'); return; }
     g.setAttribute('visibility','visible');
     const p=phaseAt(S,x), done=x>=S.TEND;
-    const grp = p.grp==='COOL'?'降溫':(p.grp==='START'?'開始':p.grp);
-    g._t.textContent = (S===S10?'10R ':'5.5R ') + (done?'完成':grp+'・'+(PHN[p.k]||p.k));
+    const grp = p.grp==='COOL'?tx('降溫','冷却'):(p.grp==='START'?tx('開始','開始'):p.grp);
+    const PHN = LANG==='ja'?PHN_J:PHN_Z;
+    g._t.textContent = (S===S10?'10R ':'5.5R ') + (done?tx('完成','完了'):grp+'・'+(PHN[p.k]||p.k));
     const bb=g._t.getBBox(), w=bb.width+12, h=20;
     // fixed row at the top of the plot, following the cursor horizontally only (no jitter)
     const cx=X(x);
@@ -412,8 +465,11 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
     g._t.setAttribute('x',tx+6); g._t.setAttribute('y',ty+14);
   }
 
-  const KIND = {start:'啟動檢查（13 ms）',rapid:'heater_stage_rapid（100 ms 脈衝升溫）',learn:'heater_stage_learning（50 ms 脈衝，每次降回目標 −5°C）',steady:'heater_stage_steady',low:'heater_stage_steadyLow（目標 −5°C 待機）',wait:'rapid：目標低於目前溫度 → 不加熱，等 5 s 逾時',cool:'加熱關閉，自然降溫',f407:'F407 送指令／等回應'};
-  const F407 = g => ({START:'JR7Cali_CaliStart（ENTER／START）',REF1:'JR7Cali_CaliStart（等 INIT_REF1_DONE）',REF2:'JR7Cali_CaliStart（等 INIT_REF2_DONE）',CALI1:'JR7Cali_Temp0Complete（等 SEG1）',CALI2:'JR7Cali_Temp1Complete（等 SEG2）',CALI3:'JR7Cali_Temp2Complete（等 SEG3）',CALI4:'JR7Cali_Temp3Complete（等 SEG4）',SAVE:'JR7Cali_Temp4Complete（等 SETTING_SAVED）',COOL:'CaliComplete → TestStart（等 < 65°C、< 60°C）',HS1:'Temp0TestReady（HS1，收 450 筆）',HS2:'Temp1TestReady（HS2，收 450 筆）',HS3:'Temp2TestReady（HS3，收 450 筆）',HS4:'Temp3TestReady（HS4，收 450 筆）',END:'Temp4TestReady → TestComplete'}[g]||'—');
+  const KIND_J = {start:'起動チェック（13 ms）',rapid:'heater_stage_rapid（100 ms パルスで昇温）',learn:'heater_stage_learning（50 ms パルス、毎回目標 −5°C まで冷却）',steady:'heater_stage_steady',low:'heater_stage_steadyLow（目標 −5°C で待機）',wait:'rapid：目標が現在温度より低い → 加熱せず 5 s タイムアウト待ち',cool:'加熱オフ、自然冷却',f407:'F407 コマンド送信／応答待ち'};
+  const F407_J = {START:'JR7Cali_CaliStart（ENTER／START）',REF1:'JR7Cali_CaliStart（INIT_REF1_DONE 待ち）',REF2:'JR7Cali_CaliStart（INIT_REF2_DONE 待ち）',CALI1:'JR7Cali_Temp0Complete（SEG1 待ち）',CALI2:'JR7Cali_Temp1Complete（SEG2 待ち）',CALI3:'JR7Cali_Temp2Complete（SEG3 待ち）',CALI4:'JR7Cali_Temp3Complete（SEG4 待ち）',SAVE:'JR7Cali_Temp4Complete（SETTING_SAVED 待ち）',COOL:'CaliComplete → TestStart（< 65°C、< 60°C 待ち）',HS1:'Temp0TestReady（HS1、450 点収集）',HS2:'Temp1TestReady（HS2、450 点収集）',HS3:'Temp2TestReady（HS3、450 点収集）',HS4:'Temp3TestReady（HS4、450 点収集）',END:'Temp4TestReady → TestComplete'};
+  const KIND_Z = {start:'啟動檢查（13 ms）',rapid:'heater_stage_rapid（100 ms 脈衝升溫）',learn:'heater_stage_learning（50 ms 脈衝，每次降回目標 −5°C）',steady:'heater_stage_steady',low:'heater_stage_steadyLow（目標 −5°C 待機）',wait:'rapid：目標低於目前溫度 → 不加熱，等 5 s 逾時',cool:'加熱關閉，自然降溫',f407:'F407 送指令／等回應'};
+  const F407_Z = g => ({START:'JR7Cali_CaliStart（ENTER／START）',REF1:'JR7Cali_CaliStart（等 INIT_REF1_DONE）',REF2:'JR7Cali_CaliStart（等 INIT_REF2_DONE）',CALI1:'JR7Cali_Temp0Complete（等 SEG1）',CALI2:'JR7Cali_Temp1Complete（等 SEG2）',CALI3:'JR7Cali_Temp2Complete（等 SEG3）',CALI4:'JR7Cali_Temp3Complete（等 SEG4）',SAVE:'JR7Cali_Temp4Complete（等 SETTING_SAVED）',COOL:'CaliComplete → TestStart（等 < 65°C、< 60°C）',HS1:'Temp0TestReady（HS1，收 450 筆）',HS2:'Temp1TestReady（HS2，收 450 筆）',HS3:'Temp2TestReady（HS3，收 450 筆）',HS4:'Temp3TestReady（HS4，收 450 筆）',END:'Temp4TestReady → TestComplete'}[g]||'—');
+  const F407 = g => LANG==='ja' ? (F407_J[g]||'—') : F407_Z(g);
   const GOAL = {REF1:'≥ 50°C',REF2:'≥ 50°C',CALI1:'80°C',CALI2:'100°C',CALI3:'120°C',CALI4:'140°C',HS1:'80°C ±8',HS2:'100°C ±8',HS3:'120°C ±8',HS4:'140°C ±8'};
 
   function params(){ return {V:+$('pV').value||12.3, Ta:+$('pTa').value||25, tau:Math.max(0.2,+$('pTau').value||2.5), Ts:Math.max(0.01,(+$('pTs').value||100)/1000), loop:Math.max(0,(+$('pLoop').value||5)/1000), r50:+$('pR50').value||82.5, coolK:+$('pCool').value||1}; }
@@ -423,14 +479,14 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
     S10=simulate('10',P); S55=simulate('55',P,S10.stat.ref);
     const diffs=[0.7,1,1.3].map(c=>simulate('55',{...P,coolK:c},S10.stat.ref).TEND-S10.TEND);
     const lo=Math.min(...diffs), hi=Math.max(...diffs);
-    const fmtD=v=>(Math.abs(v)<0.05?'相同':(v>0?'慢 ':'快 ')+Math.abs(v).toFixed(1)+' 秒');
+    const fmtD=v=>(Math.abs(v)<0.05?tx('相同','同じ'):tx((v>0?'慢 ':'快 ')+Math.abs(v).toFixed(1)+' 秒', Math.abs(v).toFixed(1)+' 秒'+(v>0?'遅い':'速い')));
     $('srange').innerHTML = `${(-hi).toFixed(1)}～${(-lo).toFixed(1)} <small>s（正值＝5.5R 較快）</small>`;
-    $('sumRange').textContent = `5.5R ${fmtD(hi)} ～ ${fmtD(lo)}`;
+    setK('sumRange', `5.5R ${fmtD(hi)} ～ ${fmtD(lo)}`);
     const cur=S55.TEND-S10.TEND;
-    $('sumLead').textContent = Math.abs(cur)<2.5 ? `與 10R 相同（模擬差距 ${Math.abs(cur).toFixed(1)} 秒，在模型誤差內）` : (cur<0?`比 10R 快約 ${(-cur).toFixed(1)} 秒`:`比 10R 慢約 ${cur.toFixed(1)} 秒`);
-    $('sumTot').textContent = (S10.TEND/60).toFixed(1)+' 分鐘（'+S10.TEND.toFixed(0)+' 秒）';
+    setK('sumLead', Math.abs(cur)<2.5 ? tx(`與 10R 相同（模擬差距 ${Math.abs(cur).toFixed(1)} 秒，在模型誤差內）`, `10R と同じ（シミュレーション上の差 ${Math.abs(cur).toFixed(1)} 秒、モデル誤差の範囲内）`) : (cur<0?tx(`比 10R 快約 ${(-cur).toFixed(1)} 秒`,`10R より約 ${(-cur).toFixed(1)} 秒速い`):tx(`比 10R 慢約 ${cur.toFixed(1)} 秒`,`10R より約 ${cur.toFixed(1)} 秒遅い`)));
+    setK('sumTot', (S10.TEND/60).toFixed(1)+tx(' 分鐘（',' 分（')+S10.TEND.toFixed(0)+' 秒）');
     const varT = Object.values(S10.stat.parts).reduce((a,x)=>a+x.r+x.l,0);
-    $('sumFix').textContent = ((1-varT/S10.TEND)*100).toFixed(0)+'%';
+    setK('sumFix', ((1-varT/S10.TEND)*100).toFixed(0)+'%');
     TMAX = Math.max(S10.TEND,S55.TEND)+4;
     $('t').max = TMAX.toFixed(2);
     $('c55h').textContent = 'R50 '+P.r50+' Ω';
@@ -471,8 +527,8 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
     });
     const sumK=(S,k)=>['CALI1','CALI2','CALI3','CALI4','HS1','HS2','HS3','HS4'].reduce((s,g)=>s+(S.stat.parts[g]?S.stat.parts[g][k]:0),0);
     const r10=sumK(S10,'r'), r55=sumK(S55,'r'), l10=sumK(S10,'l'), l55=sumK(S55,'l');
-    $('sumR').textContent=(r10-r55).toFixed(1)+' 秒'; $('sumL').textContent=Math.abs(l55-l10).toFixed(1)+' 秒';
-    const rel=(a,b)=>{ const d=a-b; return Math.abs(d)<0.05?'相同':(d>0?'<span class="pos">快 '+d.toFixed(1)+' s</span>':'<span class="neg">慢 '+(-d).toFixed(1)+' s</span>'); };
+    setK('sumR', (r10-r55).toFixed(1)+' 秒'); setK('sumL', Math.abs(l55-l10).toFixed(1)+' 秒');
+    const rel=(a,b)=>{ const d=a-b; return Math.abs(d)<0.05?tx('相同','同じ'):(d>0?'<span class="pos">'+tx('快 '+d.toFixed(1)+' s',d.toFixed(1)+' s 速い')+'</span>':'<span class="neg">'+tx('慢 '+(-d).toFixed(1)+' s',(-d).toFixed(1)+' s 遅い')+'</span>'); };
     const f10=S10.TEND-r10-l10, f55=S55.TEND-r55-l55;
     $('wr10').textContent=r10.toFixed(1)+' s'; $('wr55').textContent=r55.toFixed(1)+' s'; $('wrd').innerHTML=rel(r10,r55);
     $('wl10').textContent=l10.toFixed(1)+' s'; $('wl55').textContent=l55.toFixed(1)+' s'; $('wld').innerHTML=rel(l10,l55);
@@ -521,7 +577,7 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
       el('circle',{cx:Xp(D),cy:Yp(pk),r:4,fill:css(c),stroke:css('--surface'),'stroke-width':1.5});
       el('text',{x:Xp(D)+8,y:Yp(pk)+4,'font-size':11.5,'font-weight':700,fill:css('--ink')}).textContent=`${l} +${rise(S,T0,D).toFixed(1)}°C`;
     });
-    el('text',{x:ml,y:mt-4,'font-size':11,fill:css('--ink2')}).textContent='從 100°C 開始，一次 100 ms 脈衝後自然降溫';
+    el('text',{x:ml,y:mt-4,'font-size':11,fill:css('--ink2')}).textContent=tx('從 100°C 開始，一次 100 ms 脈衝後自然降溫','100°C から 100 ms パルス 1 回後に自然冷却');
   }
 
   function setView(mode, silent){
@@ -550,8 +606,8 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
       mk('text',{x:m.l-8,y:Y(T)+4,'text-anchor':'end','font-size':11.5,fill:mut,'font-family':'IBM Plex Mono, monospace'}).textContent=T+'°';
     });
     [50,60,65].forEach(T=>{ mk('line',{x1:m.l,x2:W-m.r,y1:Y(T),y2:Y(T),stroke:css('--accent'),'stroke-width':.8,'stroke-dasharray':'1 3',opacity:.7}); });
-    mk('text',{x:W-m.r-4,y:Y(65)-3,'text-anchor':'end','font-size':10.5,fill:css('--accent')}).textContent='65°C／60°C 降溫門檻　50°C REF 門檻';
-    mk('text',{x:m.l,y:CT-8,'font-size':12,fill:css('--ink2')}).textContent='溫度（°C）';
+    mk('text',{x:W-m.r-4,y:Y(65)-3,'text-anchor':'end','font-size':10.5,fill:css('--accent')}).textContent=tx('65°C／60°C 降溫門檻　50°C REF 門檻','65°C／60°C 冷却しきい値　50°C REF しきい値');
+    mk('text',{x:m.l,y:CT-8,'font-size':12,fill:css('--ink2')}).textContent=tx('溫度（°C）','温度（°C）');
     const clipG = mk('g',{'clip-path':'url(#clip)'});
     gScaled = mk('g',{},clipG);
     // lanes background
@@ -585,7 +641,7 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
         if (x1<m.l||x0>W-m.r) return;
         mk('line',{x1:Math.max(m.l,x0),x2:Math.max(m.l,x0),y1:y-2,y2:y+LH+2,stroke:css('--ink'),'stroke-width':1},gOver);
         const w=Math.min(x1,W-m.r)-Math.max(x0,m.l);
-        if (w>26) mk('text',{x:Math.max(x0,m.l)+3,y:y-4,'font-size':10.5,'font-weight':700,fill:css('--ink2')},gOver).textContent=s.g==='COOL'?'降溫':s.g;
+        if (w>26) mk('text',{x:Math.max(x0,m.l)+3,y:y-4,'font-size':10.5,'font-weight':700,fill:css('--ink2')},gOver).textContent=s.g==='COOL'?tx('降溫','冷却'):s.g;
       });
       const e=S.TEND; if (X(e)>=m.l && X(e)<=W-m.r){ mk('line',{x1:X(e),x2:X(e),y1:y,y2:y+LH,stroke:css('--good'),'stroke-width':2},gOver); }
     };
@@ -614,22 +670,22 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
   function card(el,S,x){
     const T=interp(S.Vm,x), Te=interp(S.V,x), p=phaseAt(S,x);
     const done = x>=S.TEND;
-    let lastMsg='—'; for(const q of S.MS){ if(q.t<=x) lastMsg=q.text; }
+    let lastMsg='—'; for(const q of S.MS){ if(q.t<=x) lastMsg=tm(q.text); }
     let coll='';
-    S.TEST.forEach((s,i)=>{ if (x>=s.cs && x<s.ce) coll=`HS${i+1}：${Math.min(450,Math.floor((x-s.cs)/params().Ts)+1)} / 450 筆`; });
-    let st = KIND[p.k]||p.k;
-    if (p.k==='steady') st += p.grp.startsWith('CALI')?'（校正穩定確認 5 s）':(p.grp.startsWith('HS')?'（維持 20 s）':'（等 REF 5 s 逾時）');
-    el.innerHTML = done ? `<dt>狀態</dt><dd><span class="pill" style="background:var(--good-bg);color:var(--good)">流程完成</span>　${S.TEND.toFixed(1)} s</dd><dt>溫度</dt><dd class="mono">${T.toFixed(1)}°C</dd><dt>最後訊息</dt><dd class="mono">${lastMsg}</dd>`
-    : `<dt>階段</dt><dd><b>${p.grp}</b>${p.grp.startsWith('REF')?' 第 '+p.n+' 輪':''} ${GOAL[p.grp]?'<span class="pill">'+GOAL[p.grp]+'</span>':''}</dd>
+    S.TEST.forEach((s,i)=>{ if (x>=s.cs && x<s.ce) coll=`HS${i+1}：${Math.min(450,Math.floor((x-s.cs)/params().Ts)+1)} / 450 ${tx('筆','点')}`; });
+    let st = (LANG==='ja'?KIND_J:KIND_Z)[p.k]||p.k;
+    if (p.k==='steady') st += p.grp.startsWith('CALI')?tx('（校正穩定確認 5 s）','（校正の安定確認 5 s）'):(p.grp.startsWith('HS')?tx('（維持 20 s）','（20 s 維持）'):tx('（等 REF 5 s 逾時）','（REF 5 s タイムアウト待ち）'));
+    el.innerHTML = done ? `<dt>${tx('狀態','状態')}</dt><dd><span class="pill" style="background:var(--good-bg);color:var(--good)">${tx('流程完成','フロー完了')}</span>　${S.TEND.toFixed(1)} s</dd><dt>${tx('溫度','温度')}</dt><dd class="mono">${T.toFixed(1)}°C</dd><dt>${tx('最後訊息','最新メッセージ')}</dt><dd class="mono">${lastMsg}</dd>`
+    : `<dt>${tx('階段','段階')}</dt><dd><b>${p.grp==='COOL'?tx('降溫','冷却'):p.grp}</b>${p.grp.startsWith('REF')?tx(' 第 '+p.n+' 輪',' 第 '+p.n+' ラウンド'):''} ${GOAL[p.grp]?'<span class="pill">'+GOAL[p.grp]+'</span>':''}</dd>
        <dt>G030</dt><dd>${st}</dd>
-       <dt>目標電壓</dt><dd class="mono">${p.tgt? p.tgt+' v16（'+(p.tgt/16).toFixed(0)+' mV）':'—'}</dd>
-       <dt>溫度</dt><dd class="mono">平均 ${T.toFixed(1)}°C　元件 ${Te.toFixed(1)}°C</dd>
+       <dt>${tx('目標電壓','目標電圧')}</dt><dd class="mono">${p.tgt? p.tgt+' v16（'+(p.tgt/16).toFixed(0)+' mV）':'—'}</dd>
+       <dt>${tx('溫度','温度')}</dt><dd class="mono">${tx('平均','平均')} ${T.toFixed(1)}°C　${tx('元件','素子')} ${Te.toFixed(1)}°C</dd>
        <dt>F407</dt><dd>${F407(p.grp)}${coll?'　<span class="pill">'+coll+'</span>':''}</dd>
-       <dt>最後訊息</dt><dd class="mono">${lastMsg}</dd>`;
+       <dt>${tx('最後訊息','最新メッセージ')}</dt><dd class="mono">${lastMsg}</dd>`;
   }
   function setT(v){ t=v; $('t').value=v; if(viewMode==='follow'){ const nv=[Math.max(0,t-15),Math.max(0,t-15)+30]; if (Math.abs(nv[0]-view[0])>0.001){ view=nv; build(); return; } } update(); }
   function update(){
-    $('clock').innerHTML = t.toFixed(2)+' s <small>自 Start 起</small>';
+    $('clock').innerHTML = t.toFixed(2)+' s <small>'+tx('自 Start 起','開始から')+'</small>';
     const inView = t>=view[0] && t<=view[1];
     cursor.setAttribute('visibility',inView?'visible':'hidden');
     d10.setAttribute('visibility',inView&&SH!=='55'?'visible':'hidden');
@@ -645,22 +701,33 @@ footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-si
     const start=(S,g)=>{ const f=S.PH.find(p=>p.grp===g); return f?f.t0:null; };
     const a=start(S10,p10.grp), b=start(S55,p10.grp);
     const d = (a!=null&&b!=null)? a-b : 0;
-    $('lead').textContent = t>=S10.TEND ? '10R 已完成' : (Math.abs(d)<0.005 ? `${p10.grp}：兩邊同時開始` : `${p10.grp}：5.5R ${d>0?'早':'晚'} ${Math.abs(d).toFixed(2)} s 開始`);
+    const gname = p10.grp==='COOL'?tx('降溫','冷却'):p10.grp;
+    $('lead').textContent = t>=S10.TEND ? tx('10R 已完成','10R 完了') : (Math.abs(d)<0.005 ? tx(`${gname}：兩邊同時開始`,`${gname}：両方同時に開始`) : tx(`${gname}：5.5R ${d>0?'早':'晚'} ${Math.abs(d).toFixed(2)} s 開始`,`${gname}：5.5R が ${Math.abs(d).toFixed(2)} s ${d>0?'早く':'遅く'}開始`));
   }
   function tick(now){ if(!playing) return; const dt=(now-last)/1000; last=now; let v=t+dt*(+$('speed').value); if(v>=TMAX){v=TMAX;stop();} setT(v); raf=requestAnimationFrame(tick); }
-  function stop(){ playing=false; cancelAnimationFrame(raf); $('play').textContent='▶ 播放'; }
-  $('play').addEventListener('click',()=>{ if(playing){stop();return;} if(t>=TMAX) setT(0); playing=true; last=performance.now(); $('play').textContent='❚❚ 暫停'; raf=requestAnimationFrame(tick); });
+  const playLabel = () => $('play').textContent = playing ? tx('❚❚ 暫停','❚❚ 一時停止') : tx('▶ 播放','▶ 再生');
+  function stop(){ playing=false; cancelAnimationFrame(raf); playLabel(); }
+  $('play').addEventListener('click',()=>{ if(playing){stop();return;} if(t>=TMAX) setT(0); playing=true; last=performance.now(); playLabel(); raf=requestAnimationFrame(tick); });
   $('t').addEventListener('input',()=>{ stop(); setT(+$('t').value); });
   document.querySelectorAll('.grp-btns button[data-v]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
   document.querySelectorAll('.grp-btns button[data-h]').forEach(b=>b.addEventListener('click',()=>{
     SH=b.dataset.h;
     document.querySelectorAll('.grp-btns button[data-h]').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
     $('card10').hidden = SH==='55'; $('card55').hidden = SH==='10';
-    $('lead').hidden = SH!=='both';
+    $('lead').style.visibility = SH==='both' ? 'visible' : 'hidden';
     build();
   }));
   ['pV','pTa','pTau','pTs','pLoop','pR50','pCool'].forEach(id=>$(id).addEventListener('change',run));
-  run();
+  function setLang(l){
+    LANG = l;
+    document.documentElement.setAttribute('data-lang', l);
+    document.documentElement.lang = l==='ja' ? 'ja' : 'zh-Hant';
+    document.title = tx('JR7 5.5R 校正模擬','JR7 5.5R 校正シミュレーション');
+    playLabel();
+    run();
+  }
+  $('langBtn').addEventListener('click',()=>setLang(LANG==='ja'?'zh':'ja'));
+  setLang('ja');
   const mq=window.matchMedia('(prefers-color-scheme: dark)');
   const rebuild=()=>{ build(); pulseView(params()); };
   mq.addEventListener && mq.addEventListener('change',rebuild);
