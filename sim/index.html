@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>JR7 5.5R 校正模擬</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f4f5f1; --surface:#ffffff; --surface2:#eceee8;
+  --ink:#161d19; --ink2:#48524b; --muted:#78817a; --line:#d9ddd5; --grid:#e6e9e3;
+  --accent:#1d4f9c; --s1:#2a78d6; --s3:#1baf7a; --cool:#8a96a8;
+  --good:#17784c; --good-bg:#e4f3ea; --warn:#9a5b00; --warn-bg:#fcf1de; --bad:#b3261e;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121614; --surface:#1a1f1c; --surface2:#222824;
+    --ink:#eef1ec; --ink2:#bcc4bd; --muted:#8c958e; --line:#303833; --grid:#262d29;
+    --accent:#8fb4f0; --s1:#3987e5; --s3:#199e70; --cool:#7d8aa0;
+    --good:#6fcf9c; --good-bg:#1a3326; --warn:#e7b05a; --warn-bg:#35291a; --bad:#f08a80;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121614; --surface:#1a1f1c; --surface2:#222824;
+  --ink:#eef1ec; --ink2:#bcc4bd; --muted:#8c958e; --line:#303833; --grid:#262d29;
+  --accent:#8fb4f0; --s1:#3987e5; --s3:#199e70; --cool:#7d8aa0;
+  --good:#6fcf9c; --good-bg:#1a3326; --warn:#e7b05a; --warn-bg:#35291a; --bad:#f08a80;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;font-size:15px;line-height:1.7;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:30px 64px}
+.mono,td.n,th.n,code{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+code{font-size:.88em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+h1,h2{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(24px,3.8vw,34px);font-weight:900}
+h2{font-size:20px;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+header{display:grid;gap:10px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.lede{color:var(--ink2);max-width:80ch}
+section{padding-block:24px 4px;display:grid;gap:12px}
+.sub{color:var(--ink2);max-width:80ch;font-size:14px}
+
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.params label{display:grid;gap:2px;font-size:12.5px;color:var(--muted)}
+.params input,.params select{font:inherit;font-family:"IBM Plex Mono",monospace;font-size:14px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface2);color:var(--ink);width:100%}
+.params small{font-size:11.5px;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.stat .k{font-size:12.5px;color:var(--muted)}
+.stat .v{font-family:"IBM Plex Mono",monospace;font-size:21px;font-weight:600;line-height:1.35}
+.stat .v small{font-size:12.5px;color:var(--muted);font-weight:400}
+
+.player{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:grid;gap:6px;border-bottom:1px solid var(--line)}
+.ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+button,select.sel{font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#play{min-width:88px;font-weight:700}
+.clock{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:600}
+.clock small{font-size:12px;color:var(--muted);font-weight:400}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.lead{font-size:13px;padding:2px 12px;border-radius:999px;background:var(--surface2);color:var(--ink2);font-weight:700}
+.grp-btns{display:flex;gap:6px;flex-wrap:wrap}
+.grp-btns[aria-label="顯示加熱器"]{margin-left:auto}
+
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 16px;display:grid;gap:4px;border-top:4px solid var(--c)}
+.card h3{margin:0;font-size:15px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card h3 span{font-weight:400;color:var(--muted);font-size:13px}
+.kv{display:grid;grid-template-columns:92px 1fr;gap:1px 10px;font-size:13.5px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:500}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:0 9px;border-radius:999px;background:var(--surface2)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 12px 6px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--ink2);margin-bottom:4px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:16px;height:10px;border-radius:2px;display:inline-block}
+.chart-scroll{overflow-x:auto}
+svg{display:block;width:100%;min-width:700px;height:auto;touch-action:none}
+
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+th{background:var(--surface2);color:var(--ink2);font-size:12px;font-weight:700}
+td.n,th.n{text-align:right}
+tr:last-child td{border-bottom:none}
+.g1{border-left:1px solid var(--line)}
+.pos{color:var(--good);font-weight:700} .neg{color:var(--bad);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.notes{margin:0;padding-left:1.2em;display:grid;gap:6px;color:var(--ink2);font-size:14px}
+.callout{background:var(--warn-bg);color:var(--ink);border-radius:10px;padding:12px 16px;font-size:14px}
+.callout b{color:var(--warn)}
+.banner{display:flex;gap:12px;align-items:flex-start;background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:10px;padding:12px 16px;font-size:14px}
+.banner b{color:var(--warn)}
+.summary{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:grid;gap:12px}
+.summary .big{font-size:clamp(18px,2.6vw,22px);font-weight:700;line-height:1.5}
+.summary .big em{font-style:normal;color:var(--accent)}
+.summary ul{margin:0;padding-left:1.2em;display:grid;gap:4px;color:var(--ink2);font-size:14px}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;padding:0 8px;border-radius:999px;white-space:nowrap}
+.tag.fix{background:var(--good-bg);color:var(--good)}
+.tag.fit{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.tag.est{background:var(--warn-bg);color:var(--warn)}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+
+@media (max-width:760px){.stats{grid-template-columns:1fr 1fr}.cards,.two{grid-template-columns:1fr}.grp-btns{margin-left:0}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">JR7 · G030 v1.62.2 + F407 V37 · 理想情況：每個溫度 1 輪就合格</div>
+  <h1>JR7 校正流程，模擬加熱器 10R／5.5R</h1>
+  <p class="lede">須優先了解條件設定為：<b>5.5R 是 R50 改成 82.5 Ω、韌體不動</b>。模擬整個流程如下：<br>REF1 → REF2 → CALI 80/100/120/140°C → 寫入 → 降溫 → HS1～HS4 測試 → 判定存檔。</p>
+  <div class="banner"><span>⚠</span><span><b>模擬推估，未經 5.5R 實測。</b>流程與固定時間直接取自程式；熱行為由 10R 的舊 log（2023-10-12）擬合，5.5R 的散熱特性假設與 10R 相同。數字用來說明「會發生什麼、差多少」，不是量測值。</span></div>
+</header>
+<section>
+  <h2>結論摘要</h2>
+  <div class="summary">
+    <p class="big">加熱器改為 5.5R 後，校正流程完全不變，且理想情況下，每個溫度 1 輪就合格，總時間預估<em id="sumLead">與 10R 相同</em>。</p>
+    <ul>
+      <li>整個校正加測試約 <b id="sumTot">—</b>，其中約 <b id="sumFix">—</b> 是程式固定的時間（每輪 5 秒的穩定確認、每段 450 筆溫度取樣等），與加熱器無關。</li>
+      <li>5.5R 升溫較快（rapid 共省約 <b id="sumR">—</b>）。但 learning 的每次脈衝都是 50 ms，相同時間上 5.5R 溫度上升較高，要等更久才降回目標 −5°C，這是假設 5.5R 與 10R 散熱比相同，所以反而多花約 <b id="sumL">—</b>，兩者大致抵銷（見下表）。</li>
+      <li>若 5.5R 的散熱比 10R 快或慢 30%，差距範圍約 <b id="sumRange">—</b>。</li>
+      <li><b>需要實測確認的風險</b>：每次加熱脈衝的能量是 1.82 倍，溫度漣波和過衝會變大。若因此讓穩定判斷（±1.2°C）多跑一輪，就會多約 6～7 秒，影響大於加熱速度本身。</li>
+    </ul>
+    <div class="tbl"><table><thead><tr><th>為什麼總時間相同（CALI 4 段＋HS 4 段，共 8 次升溫）</th><th>ON time</th><th class="n">10R</th><th class="n">5.5R</th><th class="n">5.5R 相對 10R</th></tr></thead><tbody>
+      <tr><td><b>rapid</b>：加熱到目標</td><td>閉迴路計算，5.5R 較短</td><td class="n" id="wr10">—</td><td class="n" id="wr55">—</td><td class="n" id="wrd">—</td></tr>
+      <tr><td><b>learning</b>：打 6 次脈衝，每次等降回目標 −5°C</td><td>兩邊都截在 50 ms，相同</td><td class="n" id="wl10">—</td><td class="n" id="wl55">—</td><td class="n" id="wld">—</td></tr>
+      <tr><td><b>其餘</b>：REF 5 s 逾時、steady 5 s、450 筆取樣、降溫等</td><td>—</td><td class="n" id="wf10">—</td><td class="n" id="wf55">—</td><td class="n" id="wfd">—</td></tr>
+      <tr><td><b>全流程</b></td><td></td><td class="n" id="wt10">—</td><td class="n" id="wt55">—</td><td class="n" id="wtd">—</td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+<div class="player">
+  <div class="ctrl">
+    <button id="play" type="button">▶ 播放</button>
+    <select id="speed" class="sel" aria-label="播放速度"><option value="2">2×</option><option value="5">5×</option><option value="10" selected>10×</option><option value="30">30×</option></select>
+    <span class="clock" id="clock">0.0 s</span>
+    <span class="lead" id="lead">—</span>
+    <div class="grp-btns" role="group" aria-label="顯示加熱器">
+      <button type="button" data-h="both" aria-pressed="true">10R＋5.5R</button>
+      <button type="button" data-h="10" aria-pressed="false">只看 10R</button>
+      <button type="button" data-h="55" aria-pressed="false">只看 5.5R</button>
+    </div>
+    <div class="grp-btns" role="group" aria-label="檢視範圍">
+      <button type="button" data-v="all" aria-pressed="true">全程</button>
+      <button type="button" data-v="cali" aria-pressed="false">校正段</button>
+      <button type="button" data-v="test" aria-pressed="false">測試段</button>
+      <button type="button" data-v="follow" aria-pressed="false">跟隨游標 ±15 s</button>
+    </div>
+  </div>
+  <input type="range" id="t" min="0" max="100" step="0.02" value="60" aria-label="經過時間（秒）">
+</div>
+
+<section style="padding-top:12px">
+  <div class="panel">
+    <div class="legend">
+      <span><i class="sw" style="background:var(--s1);height:3px"></i>10R 加熱元件溫度</span>
+      <span><i class="sw" style="background:var(--s3);height:3px"></i>5.5R 加熱元件溫度</span>
+      <span><i class="sw" style="background:var(--ink2)"></i>rapid 升溫</span>
+      <span><i class="sw" style="background:var(--ink2);opacity:.5"></i>learning</span>
+      <span><i class="sw" style="background:var(--ink2);opacity:.2"></i>steady</span>
+      <span><i class="sw" style="background:var(--cool);opacity:.7"></i>加熱關閉・降溫</span>
+      <span><i class="sw" style="background:repeating-linear-gradient(90deg,var(--ink2) 0 2px,transparent 2px 5px);opacity:.5"></i>steadyLow（−5°C）</span>
+      <span><i class="sw" style="background:var(--accent);height:4px"></i>F407 收 450 筆</span>
+    </div>
+    <div class="chart-scroll"><svg id="svg" viewBox="0 0 960 500" role="img" aria-label="10R 與 5.5R 校正流程溫度與階段模擬"></svg></div>
+  </div>
+  <p class="sub">曲線是<b>加熱元件</b>的溫度，包含每次加熱脈衝造成的鋸齒。兩者的平均溫度都被韌體控制在同一個目標上，所以平均看起來一樣高；差別在每次脈衝衝上去的幅度，5.5R 的鋸齒明顯比較大。請用「跟隨游標 ±15 s」放大看。F407 的判定用的是平均溫度。</p>
+</section>
+
+<section>
+  <div class="cards">
+    <div class="card" id="card10" style="--c:var(--s1)"><h3>10R <span>R50 150 Ω</span></h3><dl class="kv" id="c10"></dl></div>
+    <div class="card" id="card55" style="--c:var(--s3)"><h3>5.5R <span id="c55h">R50 82.5 Ω</span></h3><dl class="kv" id="c55"></dl></div>
+  </div>
+</section>
+
+<section>
+  <h2>各模式在做什麼</h2>
+  <div class="tbl"><table><thead><tr><th>模式</th><th>在做什麼</th><th>10R 與 5.5R 的差異</th></tr></thead><tbody>
+    <tr><td><b>啟動檢查</b></td><td style="white-space:normal">開始加熱前先關閉加熱約 13 ms，檢查加熱器是否開路／短路</td><td style="white-space:normal">相同</td></tr>
+    <tr><td><b>rapid 升溫</b></td><td style="white-space:normal">每次最長加熱 100 ms，再量 PA5，重複到溫度到達目標</td><td style="white-space:normal">5.5R 升溫快，時間較短</td></tr>
+    <tr><td><b>learning 學習</b></td><td style="white-space:normal">① 等溫度降到目標 −5°C → ② 加熱 50 ms → ③ 再等降回目標 −5°C；共 6 次（累計 ON time 超過 300 ms），用來量測升溫與降溫速度</td><td style="white-space:normal">ON time 相同；5.5R 每次升得較多，③ 等降溫較久，時間較長（溫度越低差越多）</td></tr>
+    <tr><td><b>steady 穩定</b></td><td style="white-space:normal">以每次最長 50 ms 的加熱維持在目標溫度；校正時固定 5 秒後判定，測試時維持 20 秒</td><td style="white-space:normal">時間相同；5.5R 溫度鋸齒較大，平均溫度相同</td></tr>
+    <tr><td><b>steadyLow 待機</b></td><td style="white-space:normal">測試時 steady 滿 20 秒後，目標降 5°C 待機，F407 繼續收集溫度直到 450 筆</td><td style="white-space:normal">相同</td></tr>
+    <tr><td><b>加熱關閉・降溫</b></td><td style="white-space:normal">校正寫入後停止加熱，自然降到 60°C 以下才開始測試；流程結束後也是此狀態</td><td style="white-space:normal">假設散熱相同，時間相同</td></tr>
+    <tr><td><b>等待（不加熱）</b></td><td style="white-space:normal">REF1 前幾輪的目標低於室溫，不需加熱，等 5 秒逾時後提高目標再試</td><td style="white-space:normal">相同</td></tr>
+  </tbody></table></div>
+</section>
+
+<section>
+  <h2>ON time：哪些相同、哪些不同</h2>
+  <p class="sub">韌體是閉迴路，每次加熱的 ON time =（距離目標的電壓差）÷（量到的升溫速度），再截在上限內。5.5R 升溫速度快，算出來的 ON time 就短；只有算出來超過上限、被截斷的脈衝，兩邊才相同。</p>
+  <div class="tbl"><table><thead><tr><th>階段</th><th>ON time 計算</th><th>上限</th><th>10R</th><th>5.5R</th><th>結果</th></tr></thead><tbody>
+    <tr><td>rapid 第一次</td><td>用預估速度計算</td><td class="mono">100 ms</td><td>截在 100 ms</td><td>截在 100 ms</td><td><b>相同</b>，5.5R 升得較多</td></tr>
+    <tr><td>rapid 之後</td><td>用實測速度計算</td><td class="mono">100 ms</td><td>較長</td><td>較短</td><td>兩者都停在目標，5.5R 較早到</td></tr>
+    <tr><td>learning 每次</td><td>加熱到目標 +5°C 所需時間</td><td class="mono">50 ms</td><td>需約 220 ms → 截在 50 ms</td><td>需約 95 ms → 截在 50 ms</td><td><b>相同</b>，5.5R 升得較多，降溫等待較久</td></tr>
+    <tr><td>steady 每次</td><td>加熱到目標 +3°C 所需時間</td><td class="mono">50 ms</td><td>截在 50 ms</td><td>截在 50 ms</td><td><b>相同</b>，5.5R 鋸齒較大，平均溫度相同</td></tr>
+  </tbody></table></div>
+  <p class="sub">下圖是<b>被上限截斷、ON time 相同時</b>的單次脈衝比較：同樣時間內 5.5R 注入 1.82 倍的能量，但散熱量相同，所以淨升溫是 10R 的 1.82 倍以上，溫度越高差得越多。</p>
+  <div class="two">
+    <div class="panel"><div class="chart-scroll"><svg id="pulse" viewBox="0 0 460 250" role="img" aria-label="同一次 100 ms 脈衝的升溫比較" style="min-width:0"></svg></div></div>
+    <div class="tbl"><table><thead><tr><th>起始溫度</th><th class="n">脈衝</th><th class="n">10R 升溫</th><th class="n">5.5R 升溫</th><th class="n">倍數</th></tr></thead><tbody id="pt"></tbody></table></div>
+  </div>
+  <p class="sub">所以 1.82 倍的差異只表現在<b>被截斷的單次脈衝</b>：rapid 第一次升得比較多，learning 和 steady 每次衝得比較高（主圖中 5.5R 的鋸齒較大）。最終溫度兩者相同，因為韌體到了目標就停。</p>
+</section>
+<section>
+  <h2>結論</h2>
+  <div class="summary" id="endSummary"></div>
+</section>
+</div>
+
+<script>
+(function(){
+  const ALPHA = 0.00114, G_FIT = 72.7, V_FIT = 12.3, R_FIT = 9.8;
+  const $ = id => document.getElementById(id) || document.createElement('div');
+  function pa5(rh,r50){ const vh=3.3*rh/(r50+rh), vp=vh*100/101, rin=17.8e3+20e3*1e3/21e3, g=390e3/rin; return vp*(1+g)-(3.3/21)*g; }
+
+  function simulate(kind, P, shared){
+    const R25 = kind==='10'?10:5.5, R50 = kind==='10'?150:P.r50;
+    const k = 1/(P.tau*(kind==='55'?P.coolK:1)), Ta = P.Ta, Ts = P.Ts, L = P.loop;
+    const G = G_FIT*Math.pow(P.V/V_FIT,2)*(R_FIT/R25);
+    const v16 = T => pa5(R25*(1+ALPHA*(T-25)),R50)*16000;
+    const Tof = v => { let a=-60,b=500; for(let i=0;i<60;i++){ const m=(a+b)/2; if(v16(m)<v) a=m; else b=m; } return (a+b)/2; };
+    let t=0, T=Ta; const V=[[0,Ta]], Vm=[[0,Ta]], PH=[], MS=[], TEST=[];
+    const push=()=>{ V.push([t,T]); Vm.push([t,T]); };
+    const g = x => G - k*(x-Ta);
+    const onG={}; let curG='';
+    function heat(d,mean=true){ if(d<=0) return; onG[curG]=(onG[curG]||0)+d; const A=Ta+G/k, T0=T, n=Math.max(1,Math.ceil(d/0.05)); for(let i=1;i<=n;i++){ const tt=d*i/n, v=A-(A-T0)*Math.exp(-k*tt); V.push([t+tt,v]); if(mean) Vm.push([t+tt,v]); } t+=d; T=V[V.length-1][1]; }
+    function cool(d,mean=true){ if(d<=0) return; if(!isFinite(d)) d=1; const T0=T, n=Math.max(1,Math.min(200,Math.ceil(d/0.1))); for(let i=1;i<=n;i++){ const tt=d*i/n, v=Ta+(T0-Ta)*Math.exp(-k*tt); V.push([t+tt,v]); if(mean) Vm.push([t+tt,v]); } t+=d; T=V[V.length-1][1]; }
+    // steady regulation: 50 ms pulses (HEATER_STEAD_MAX_HEATING_TIME) + cool back; mean temperature stays at Tc
+    function rip(d, Tc){
+      if (d<=0) return;
+      const end=t+d, rise=Math.max(0.2, (Ta+G/k-Tc)*(1-Math.exp(-k*0.05))), lo=Tc-rise/2;
+      Vm.push([t,Tc]); let guard=0;
+      while (t < end-1e-6 && guard++ < 20000){
+        if (T > lo+1e-3){ const c=Math.min(tCool(lo), end-t); cool(isFinite(c)?Math.max(c,1e-3):end-t,false); }
+        else { heat(Math.min(0.05,end-t),false); if (t<end) cool(Math.min(0.010,end-t),false); }
+      }
+      Vm.push([t,Tc]);
+    }
+    function hold(d){ if(d<=0) return; t+=d; push(); }
+    const tHeat = T1 => T1<=T ? 0 : (g(T1)<=0 ? Infinity : Math.log(g(T)/g(T1))/k);
+    const tCool = T1 => T1>=T ? 0 : (T1<=Ta+1e-6 ? Infinity : Math.log((T-Ta)/(T1-Ta))/k);
+    function ph(kind2, meta, fn){ const t0=t, g0=curG; curG=meta.grp; fn(); curG=g0; if(t>t0) PH.push({t0,t1:t,k:kind2,...meta}); }
+    function msg(text, grp){ MS.push({t, text, grp}); }
+
+    function rapid(Tt, dl, meta){
+      let blocked=false;
+      ph('rapid',meta,()=>{
+        if (T > Tt+5){
+          if (Tt+5 <= Ta+0.05){ blocked=true; return; }
+          cool(Math.min(tCool(Tt+5), dl-t));
+        }
+        let first=true, guard=0;
+        while (T < Tt && t < dl && guard++ < 400){
+          let p = first ? 0.1 : Math.min(0.1, Math.max(0.002, tHeat(Tt+3)));
+          p = Math.min(p, dl-t); heat(p);
+          if (t < dl) cool(Math.min(0.010, dl-t));
+          first=false;
+        }
+      });
+      if (blocked) ph('wait',meta,()=>cool(dl-t));
+      return !blocked;
+    }
+    function learning(Tt, dl, meta){
+      ph('learn',meta,()=>{
+        if (T > Tt-5) cool(Math.min(tCool(Tt-5), dl-t));
+        for (let i=0;i<6 && t<dl;i++){
+          heat(Math.min(0.05, Math.max(0.002,tHeat(Tt+5)), dl-t));
+          if (t<dl) cool(Math.min(0.010, dl-t));
+          if (i<5 && t<dl) cool(Math.min(tCool(Tt-5), dl-t));
+        }
+      });
+    }
+    function settle(Tt, dl){ heat(Math.min(tHeat(Tt), dl-t)); }
+
+    const stat = {rounds:{}, refN:0, parts:{}};
+    const addPart=(name,r,l,tot)=>{ const p=stat.parts[name]||(stat.parts[name]={r:0,l:0,tot:0}); p.r+=r; p.l+=l; p.tot+=tot; };
+    const phaseSum=(meta,kindName,t0)=>PH.filter(p=>p.t0>=t0 && p.grp===meta.grp && p.k===kindName).reduce((s,p)=>s+(p.t1-p.t0),0);
+
+    // --- handshake: ENTER / START, first temperature sample
+    ph('f407',{grp:'START',n:1},()=>hold(8*L+Ts));
+    msg('[JR7]ACK_ENTER／ACK_START','START');
+
+    // --- REF rounds
+    function refRound(grp, n, tgt){
+      const meta={grp,n,tgt}, t0=t, dl=t+5.0+Ts*0.6, Tt=Tof(tgt);
+      ph('start',meta,()=>cool(0.013));
+      if (rapid(Tt, dl, meta)){ learning(Tt, dl, meta); ph('steady',meta,()=>{ settle(Tt,dl); rip(dl-t, Tt); }); }
+      addPart(grp, phaseSum(meta,'rapid',t0), phaseSum(meta,'learn',t0), t-t0);
+      return T;
+    }
+    // ideal: judge REF by the target's equilibrium temperature so both heaters run the same REF rounds
+    let r1 = [], r2 = [];
+    if (shared){ r1 = shared.r1; r2 = shared.r2; }
+    else {
+      let tg = 800<<4; while (Tof(tg) < 50 && r1.length < 40){ r1.push(tg); tg += 1000; } r1.push(tg);
+      let tg2 = tg + 2000; while (Tof(tg2) < 50 && r2.length < 20){ r2.push(tg2); tg2 += 1000; } r2.push(tg2);
+    }
+    r1.forEach((tg,i)=>refRound('REF1', i+1, tg));
+    stat.refN = r1.length; stat.ref = {r1, r2}; msg('[JR7]INIT_REF1_DONE','REF1');
+    r2.forEach((tg,i)=>refRound('REF2', i+1, tg));
+    msg('[JR7]INIT_REF2_DONE','REF2');
+
+    // --- CALI rounds (ideal: 1 round each)
+    [80,100,120,140].forEach((Tc,i)=>{
+      const grp='CALI'+(i+1), meta={grp,n:1,tgt:Math.round(v16(Tc))}, t0=t;
+      ph('start',meta,()=>cool(0.013));
+      rapid(Tc, Infinity, meta); learning(Tc, Infinity, meta);
+      ph('steady',meta,()=>{ settle(Tc, Infinity); rip(5.0+Ts*0.6, Tc); });
+      msg(`[JR7]CALI_SEG${i+1}_DONE`, grp);
+      addPart(grp, phaseSum(meta,'rapid',t0), phaseSum(meta,'learn',t0), t-t0);
+    });
+    // --- save & cool down
+    const tc0=t;
+    ph('cool',{grp:'SAVE',n:1},()=>cool(Ts));
+    msg('[JR7]CALI_SETTING_SAVED','SAVE');
+    ph('cool',{grp:'COOL',n:1},()=>{ cool(Ts+10*L); });
+    msg('[CALI]STOP → ACK_STOP','COOL');
+    ph('cool',{grp:'COOL',n:1},()=>{ cool(4*L); cool(Math.max(tCool(65),0)); });
+    msg('溫度 < 65°C','COOL');
+    ph('cool',{grp:'COOL',n:1},()=>{ cool(4*L); cool(Math.max(tCool(60),0)); cool(5*L); });
+    msg('溫度 < 60°C → 開始測試','COOL');
+    addPart('COOL',0,0,t-tc0);
+
+    // --- tests
+    [80,100,120,140].forEach((Tc,i)=>{
+      const grp='HS'+(i+1), meta={grp,n:1,tgt:Math.round(v16(Tc))}, t0=t;
+      ph('f407',meta,()=>hold(3*L));
+      msg(`[CALI]HS${i+1}`,grp);
+      ph('start',meta,()=>cool(0.013));
+      rapid(Tc, Infinity, meta); learning(Tc, Infinity, meta);
+      const ts = t;
+      ph('steady',meta,()=>settle(Tc,Infinity));
+      const cs = ts + 0.1, ce = cs + 450*Ts;
+      const lowAt = ts + 20;
+      ph('steady',meta,()=>rip(Math.max(0,cs-t), Tc));
+      msg('[JR7]CALI_TEST_STEADY',grp);
+      if (lowAt < ce){
+        ph('steady',meta,()=>rip(lowAt-t, Tc));
+        msg('[JR7]CALI_TEST_END（steadyLow）',grp);
+        ph('low',meta,()=>{ cool(Math.min(tCool(Tc-5), ce-t)); rip(ce-t, Tc-5); });
+      } else {
+        ph('steady',meta,()=>rip(ce-t, Tc));
+      }
+      msg(`[CALI]HS_STOP（收滿 450 筆）`,grp);
+      ph('cool',meta,()=>cool(4*L));
+      TEST.push({Tc, cs, ce, lowIdx: lowAt<ce ? Math.ceil((lowAt-cs)/Ts) : null});
+      addPart(grp, phaseSum(meta,'rapid',t0), phaseSum(meta,'learn',t0), t-t0);
+    });
+    const te0=t;
+    ph('cool',{grp:'END',n:1},()=>cool(4*L+996*L));
+    msg('TestComplete → 判定、存 CSV','END');
+    addPart('END',0,0,t-te0);
+    const TEND = t;
+    ph('cool',{grp:'END',n:2},()=>cool(4));
+
+    // test stats
+    const Tat = x => interp(Vm,x);
+    TEST.forEach(s=>{
+      let mn=1e9,mx=-1e9,sum=0;
+      for(let i=70;i<330;i++){ const v=Tat(s.cs+i*Ts); mn=Math.min(mn,v); mx=Math.max(mx,v); }
+      for(let i=170;i<330;i++) sum+=Tat(s.cs+i*Ts);
+      s.min=mn; s.max=mx; s.avg=sum/160;
+    });
+    return {V,Vm,PH,MS,TEST,TEND,stat,v16,G,k,Ta,onG};
+  }
+  function interp(V,x){
+    if (x<=V[0][0]) return V[0][1];
+    let lo=0, hi=V.length-1;
+    if (x>=V[hi][0]) return V[hi][1];
+    while(hi-lo>1){ const m=(lo+hi)>>1; if(V[m][0]<=x) lo=m; else hi=m; }
+    const [x0,y0]=V[lo],[x1,y1]=V[hi]; return x1===x0?y1:y0+(y1-y0)*(x-x0)/(x1-x0);
+  }
+
+  // ---------- rendering ----------
+  const svg=$('svg'), NS='http://www.w3.org/2000/svg';
+  const W=960, m={l:54,r:16}, CT=22, CB=282, L1=330, L2=402, LH=40, AX=468;
+  const PW=W-m.l-m.r;
+  const YT=[20,150];
+  const Y = T => CB-(T-YT[0])/(YT[1]-YT[0])*(CB-CT);
+  const mk=(tag,at,p=svg)=>{const e=document.createElementNS(NS,tag);for(const k in at)e.setAttribute(k,at[k]);p.appendChild(e);return e;};
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let S10,S55,TMAX,view=[0,100],viewMode='all',t=60,playing=false,last=0,raf=0;
+  let gScaled, gOver, cursor, d10, d55, tag10, tag55, SH='both';
+  const PHN = {start:'啟動檢查',rapid:'rapid 升溫',learn:'learning 學習',steady:'steady 穩定',low:'steadyLow 待機（−5°C）',wait:'等待（不加熱）',cool:'加熱關閉・降溫',f407:'F407 處理中'};
+  function placeTag(g, S, x, show, below){
+    if (!show){ g.setAttribute('visibility','hidden'); return; }
+    g.setAttribute('visibility','visible');
+    const p=phaseAt(S,x), done=x>=S.TEND;
+    const grp = p.grp==='COOL'?'降溫':(p.grp==='START'?'開始':p.grp);
+    g._t.textContent = (S===S10?'10R ':'5.5R ') + (done?'完成':grp+'・'+(PHN[p.k]||p.k));
+    const bb=g._t.getBBox(), w=bb.width+12, h=20;
+    // fixed row at the top of the plot, following the cursor horizontally only (no jitter)
+    const cx=X(x);
+    let tx = cx+8; if (tx+w > W-m.r) tx = cx-8-w;
+    const ty = CT + 4 + (below ? h+4 : 0);
+    g._r.setAttribute('x',tx); g._r.setAttribute('y',ty); g._r.setAttribute('width',w); g._r.setAttribute('height',h);
+    g._t.setAttribute('x',tx+6); g._t.setAttribute('y',ty+14);
+  }
+
+  const KIND = {start:'啟動檢查（13 ms）',rapid:'heater_stage_rapid（100 ms 脈衝升溫）',learn:'heater_stage_learning（50 ms 脈衝，每次降回目標 −5°C）',steady:'heater_stage_steady',low:'heater_stage_steadyLow（目標 −5°C 待機）',wait:'rapid：目標低於目前溫度 → 不加熱，等 5 s 逾時',cool:'加熱關閉，自然降溫',f407:'F407 送指令／等回應'};
+  const F407 = g => ({START:'JR7Cali_CaliStart（ENTER／START）',REF1:'JR7Cali_CaliStart（等 INIT_REF1_DONE）',REF2:'JR7Cali_CaliStart（等 INIT_REF2_DONE）',CALI1:'JR7Cali_Temp0Complete（等 SEG1）',CALI2:'JR7Cali_Temp1Complete（等 SEG2）',CALI3:'JR7Cali_Temp2Complete（等 SEG3）',CALI4:'JR7Cali_Temp3Complete（等 SEG4）',SAVE:'JR7Cali_Temp4Complete（等 SETTING_SAVED）',COOL:'CaliComplete → TestStart（等 < 65°C、< 60°C）',HS1:'Temp0TestReady（HS1，收 450 筆）',HS2:'Temp1TestReady（HS2，收 450 筆）',HS3:'Temp2TestReady（HS3，收 450 筆）',HS4:'Temp3TestReady（HS4，收 450 筆）',END:'Temp4TestReady → TestComplete'}[g]||'—');
+  const GOAL = {REF1:'≥ 50°C',REF2:'≥ 50°C',CALI1:'80°C',CALI2:'100°C',CALI3:'120°C',CALI4:'140°C',HS1:'80°C ±8',HS2:'100°C ±8',HS3:'120°C ±8',HS4:'140°C ±8'};
+
+  function params(){ return {V:+$('pV').value||12.3, Ta:+$('pTa').value||25, tau:Math.max(0.2,+$('pTau').value||2.5), Ts:Math.max(0.01,(+$('pTs').value||100)/1000), loop:Math.max(0,(+$('pLoop').value||5)/1000), r50:+$('pR50').value||82.5, coolK:+$('pCool').value||1}; }
+
+  function run(){
+    const P=params();
+    S10=simulate('10',P); S55=simulate('55',P,S10.stat.ref);
+    const diffs=[0.7,1,1.3].map(c=>simulate('55',{...P,coolK:c},S10.stat.ref).TEND-S10.TEND);
+    const lo=Math.min(...diffs), hi=Math.max(...diffs);
+    const fmtD=v=>(Math.abs(v)<0.05?'相同':(v>0?'慢 ':'快 ')+Math.abs(v).toFixed(1)+' 秒');
+    $('srange').innerHTML = `${(-hi).toFixed(1)}～${(-lo).toFixed(1)} <small>s（正值＝5.5R 較快）</small>`;
+    $('sumRange').textContent = `5.5R ${fmtD(hi)} ～ ${fmtD(lo)}`;
+    const cur=S55.TEND-S10.TEND;
+    $('sumLead').textContent = Math.abs(cur)<2.5 ? `與 10R 相同（模擬差距 ${Math.abs(cur).toFixed(1)} 秒，在模型誤差內）` : (cur<0?`比 10R 快約 ${(-cur).toFixed(1)} 秒`:`比 10R 慢約 ${cur.toFixed(1)} 秒`);
+    $('sumTot').textContent = (S10.TEND/60).toFixed(1)+' 分鐘（'+S10.TEND.toFixed(0)+' 秒）';
+    const varT = Object.values(S10.stat.parts).reduce((a,x)=>a+x.r+x.l,0);
+    $('sumFix').textContent = ((1-varT/S10.TEND)*100).toFixed(0)+'%';
+    TMAX = Math.max(S10.TEND,S55.TEND)+4;
+    $('t').max = TMAX.toFixed(2);
+    $('c55h').textContent = 'R50 '+P.r50+' Ω';
+    $('s10').innerHTML = S10.TEND.toFixed(1)+' <small>s</small>';
+    $('s55').innerHTML = S55.TEND.toFixed(1)+' <small>s</small>';
+    const d=S55.TEND-S10.TEND;
+    $('sd').innerHTML = `<span>${Math.abs(d)<0.05?'0.0':(d>0?'+':'')+d.toFixed(1)} s</span> <small>(${(d/S10.TEND*100).toFixed(1)}%)</small>`;
+    tables(P);
+    { const src=document.querySelector('.summary'), dst=$('endSummary'); dst.innerHTML='';
+      src.querySelectorAll(':scope > .big').forEach(n=>{ const c=n.cloneNode(true); c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); c.removeAttribute('id'); dst.appendChild(c); }); }
+    onTable();
+    pulseView(P);
+    setView(viewMode,true);
+    if (t>TMAX) t=TMAX;
+    build();
+  }
+
+  function tables(P){
+    // milestones
+    const ms=$('ms'); ms.innerHTML='';
+    const key = x => x.grp+'|'+x.text;
+    const map55 = new Map(S55.MS.map(x=>[key(x),x.t]));
+    S10.MS.forEach(x=>{
+      const t55 = map55.get(key(x)); const d = t55==null?null:x.t-t55;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td><b>${x.grp}</b>　<span class="mono">${x.text}</span></td><td class="n">${x.t.toFixed(1)} s</td><td class="n">${t55==null?'—':t55.toFixed(1)+' s'}</td><td class="n g1 ${d>0.05?'pos':(d<-0.05?'neg':'')}">${d==null?'—':(Math.abs(d)<0.05?'0.0':(d>0?'+':'')+d.toFixed(1))+' s'}</td>`;
+      ms.appendChild(tr);
+    });
+    // phases
+    const phb=$('ph'); phb.innerHTML='';
+    Object.keys(S10.stat.parts).forEach(g=>{
+      const a=S10.stat.parts[g], b=S55.stat.parts[g]||{r:0,l:0,tot:0}; const d=a.tot-b.tot;
+      const f=v=>v>0.0005? (v<1? (Math.round(v*100)*10)+' ms' : v.toFixed(1)+' s') : '—';
+      const label = g==='REF1'?`REF1（兩者 ${S10.stat.refN} 輪）`:(g==='COOL'?'寫入後降溫到 60°C':(g==='END'?'STOP 後 F407 等待＋判定':g));
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${label}</td><td class="n">${f(a.r)}</td><td class="n">${f(a.l)}</td><td class="n">${a.tot.toFixed(1)} s</td><td class="n g1">${f(b.r)}</td><td class="n">${f(b.l)}</td><td class="n">${b.tot.toFixed(1)} s</td><td class="n g1 ${d>0.05?'pos':(d<-0.05?'neg':'')}">${Math.abs(d)<0.05?'0.0':(d>0?'+':'')+d.toFixed(1)} s</td>`;
+      phb.appendChild(tr);
+    });
+    const sumK=(S,k)=>['CALI1','CALI2','CALI3','CALI4','HS1','HS2','HS3','HS4'].reduce((s,g)=>s+(S.stat.parts[g]?S.stat.parts[g][k]:0),0);
+    const r10=sumK(S10,'r'), r55=sumK(S55,'r'), l10=sumK(S10,'l'), l55=sumK(S55,'l');
+    $('sumR').textContent=(r10-r55).toFixed(1)+' 秒'; $('sumL').textContent=Math.abs(l55-l10).toFixed(1)+' 秒';
+    const rel=(a,b)=>{ const d=a-b; return Math.abs(d)<0.05?'相同':(d>0?'<span class="pos">快 '+d.toFixed(1)+' s</span>':'<span class="neg">慢 '+(-d).toFixed(1)+' s</span>'); };
+    const f10=S10.TEND-r10-l10, f55=S55.TEND-r55-l55;
+    $('wr10').textContent=r10.toFixed(1)+' s'; $('wr55').textContent=r55.toFixed(1)+' s'; $('wrd').innerHTML=rel(r10,r55);
+    $('wl10').textContent=l10.toFixed(1)+' s'; $('wl55').textContent=l55.toFixed(1)+' s'; $('wld').innerHTML=rel(l10,l55);
+    $('wf10').textContent=f10.toFixed(1)+' s'; $('wf55').textContent=f55.toFixed(1)+' s'; $('wfd').innerHTML=rel(f10,f55);
+    $('wt10').textContent=S10.TEND.toFixed(1)+' s'; $('wt55').textContent=S55.TEND.toFixed(1)+' s'; $('wtd').innerHTML=rel(S10.TEND,S55.TEND);
+    $('insight').innerHTML = `<b>為什麼 5.5R 沒有明顯變快：</b>CALI 與 HS 共 8 次升溫中，rapid 合計從 ${r10.toFixed(1)} s 變成 ${r55.toFixed(1)} s（快 ${(r10-r55).toFixed(1)} s）。但 learning 合計從 ${l10.toFixed(1)} s 變成 ${l55.toFixed(1)} s（${l55>l10?'慢':'快'} ${Math.abs(l55-l10).toFixed(1)} s）。learning 的結束條件是「累計 ON time &gt; 300 ms」（<code>HEATER_LEARNING_MIN_HEAT_TIME</code>），而每次脈衝兩邊都被截在 50 ms，所以都要打 6 次、ON time 相同；5.5R 每次脈衝升溫較多，每次降回目標 −5°C 要等比較久。其餘時間（REF 5 s 逾時、steady 5 s、450 筆取樣、降溫）兩邊相同。`;
+    // test
+    const tr=$('tr'); tr.innerHTML='';
+    S10.TEST.forEach((a,i)=>{
+      const b=S55.TEST[i]; const lo=a.Tc-8, hi=a.Tc+8;
+      const c=(v,ok)=>`<td class="n ${ok?'':'neg'}">${v.toFixed(1)}</td>`;
+      const row=document.createElement('tr');
+      row.innerHTML=`<td>HS${i+1}</td><td class="n">${lo}～${hi}°C</td>${c(a.min,a.min>lo).replace('<td class="n','<td class="n g1')}${c(a.max,a.max<hi)}<td class="n">${a.avg.toFixed(1)}</td>${c(b.min,b.min>lo).replace('<td class="n','<td class="n g1')}${c(b.max,b.max<hi)}<td class="n">${b.avg.toFixed(1)}</td><td class="g1">${a.lowIdx==null?'收完前不會轉':('第 '+a.lowIdx+' 筆')}</td>`;
+      tr.appendChild(row);
+    });
+  }
+
+  function onTable(){
+    const tb=$('ont'); tb.innerHTML=''; let a=0,b=0;
+    ['REF1','REF2','CALI1','CALI2','CALI3','CALI4','HS1','HS2','HS3','HS4'].forEach(g=>{ const x=S10.onG[g]||0, y=S55.onG[g]||0; a+=x; b+=y;
+      const tr=document.createElement('tr'); tr.innerHTML=`<td>${g}</td><td class="n">${x.toFixed(2)} s</td><td class="n">${y.toFixed(2)} s</td><td class="n">${x>0?(y/x*100).toFixed(0)+'%':'—'}</td>`; tb.appendChild(tr); });
+    const tr=document.createElement('tr'); tr.innerHTML=`<td><b>合計</b></td><td class="n"><b>${a.toFixed(2)} s</b></td><td class="n"><b>${b.toFixed(2)} s</b></td><td class="n"><b>${(b/a*100).toFixed(0)}%</b></td>`; tb.appendChild(tr);
+  }
+  function pulseView(P){
+    const rise=(S,T0,d)=>(S.Ta+S.G/S.k-T0)*(1-Math.exp(-S.k*d));
+    const pt=$('pt'); pt.innerHTML='';
+    [80,100,120,140].forEach(T0=>[0.05,0.1].forEach(d=>{
+      const a=rise(S10,T0,d), b=rise(S55,T0,d); const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${T0}°C</td><td class="n">${d*1000} ms</td><td class="n">+${a.toFixed(1)}°C</td><td class="n">+${b.toFixed(1)}°C</td><td class="n"><b>${(b/a).toFixed(2)}×</b></td>`;
+      pt.appendChild(tr);
+    }));
+    const sv=$('pulse'); sv.innerHTML='';
+    const w=460,h=250,ml=40,mr=10,mt=16,mb=34, T0=100, D=0.1, SPAN=0.6;
+    const peak=Math.max(rise(S10,T0,D),rise(S55,T0,D));
+    const y0=T0-1, y1=T0+Math.ceil(peak+1);
+    const Xp=s=>ml+s/SPAN*(w-ml-mr), Yp=v=>h-mb-(v-y0)/(y1-y0)*(h-mb-mt);
+    const el=(tag,at)=>{const e=document.createElementNS(NS,tag);for(const q in at)e.setAttribute(q,at[q]);sv.appendChild(e);return e;};
+    for(let v=Math.ceil(y0);v<=y1;v+=2){ el('line',{x1:ml,x2:w-mr,y1:Yp(v),y2:Yp(v),stroke:css('--grid')}); el('text',{x:ml-6,y:Yp(v)+4,'text-anchor':'end','font-size':10.5,fill:css('--muted'),'font-family':'IBM Plex Mono, monospace'}).textContent=v+'°'; }
+    [0,0.1,0.2,0.3,0.4,0.5,0.6].forEach(s=>el('text',{x:Xp(s),y:h-mb+16,'text-anchor':'middle','font-size':10.5,fill:css('--muted'),'font-family':'IBM Plex Mono, monospace'}).textContent=(s*1000)+' ms');
+    el('rect',{x:Xp(0),y:mt,width:Xp(D)-Xp(0),height:h-mb-mt,fill:css('--accent'),opacity:.08});
+    el('text',{x:Xp(D/2),y:mt+12,'text-anchor':'middle','font-size':11,fill:css('--accent')}).textContent='ON 100 ms';
+    [[S10,'--s1','10R'],[S55,'--s3','5.5R']].forEach(([S,c,l])=>{
+      let d=''; for(let i=0;i<=120;i++){ const s=i/120*SPAN; const v = s<=D ? T0+rise(S,T0,s) : S.Ta+(T0+rise(S,T0,D)-S.Ta)*Math.exp(-S.k*(s-D)); d+=(i?'L':'M')+Xp(s).toFixed(1)+' '+Yp(v).toFixed(1); }
+      el('path',{d,fill:'none',stroke:css(c),'stroke-width':2.2});
+      const pk=T0+rise(S,T0,D);
+      el('circle',{cx:Xp(D),cy:Yp(pk),r:4,fill:css(c),stroke:css('--surface'),'stroke-width':1.5});
+      el('text',{x:Xp(D)+8,y:Yp(pk)+4,'font-size':11.5,'font-weight':700,fill:css('--ink')}).textContent=`${l} +${rise(S,T0,D).toFixed(1)}°C`;
+    });
+    el('text',{x:ml,y:mt-4,'font-size':11,fill:css('--ink2')}).textContent='從 100°C 開始，一次 100 ms 脈衝後自然降溫';
+  }
+
+  function setView(mode, silent){
+    viewMode=mode;
+    document.querySelectorAll('.grp-btns button[data-v]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===mode?'true':'false'));
+    if (!S10) return;
+    const hs1 = Math.min(...S10.PH.filter(p=>p.grp==='HS1').map(p=>p.t0));
+    if (mode==='all') view=[0,TMAX];
+    else if (mode==='cali') view=[0, hs1+2];
+    else if (mode==='test') view=[hs1-8, TMAX];
+    else view=[Math.max(0,t-15), Math.max(0,t-15)+30];
+    if (!silent) build();
+  }
+
+  const X = s => m.l + (s-view[0])/(view[1]-view[0])*PW;
+
+  function build(){
+    svg.innerHTML='';
+    const grid=css('--grid'), mut=css('--muted');
+    const defs=mk('defs',{});
+    const cp=mk('clipPath',{id:'clip'},defs); mk('rect',{x:m.l,y:0,width:PW,height:500},cp);
+    const pat=mk('pattern',{id:'hatch',width:5,height:5,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);
+    mk('rect',{width:2,height:5,fill:css('--ink2')},pat);
+    [20,40,60,80,100,120,140].forEach(T=>{
+      mk('line',{x1:m.l,x2:W-m.r,y1:Y(T),y2:Y(T),stroke:[80,100,120,140].includes(T)?mut:grid,'stroke-dasharray':[80,100,120,140].includes(T)?'2 4':'none'});
+      mk('text',{x:m.l-8,y:Y(T)+4,'text-anchor':'end','font-size':11.5,fill:mut,'font-family':'IBM Plex Mono, monospace'}).textContent=T+'°';
+    });
+    [50,60,65].forEach(T=>{ mk('line',{x1:m.l,x2:W-m.r,y1:Y(T),y2:Y(T),stroke:css('--accent'),'stroke-width':.8,'stroke-dasharray':'1 3',opacity:.7}); });
+    mk('text',{x:W-m.r-4,y:Y(65)-3,'text-anchor':'end','font-size':10.5,fill:css('--accent')}).textContent='65°C／60°C 降溫門檻　50°C REF 門檻';
+    mk('text',{x:m.l,y:CT-8,'font-size':12,fill:css('--ink2')}).textContent='溫度（°C）';
+    const clipG = mk('g',{'clip-path':'url(#clip)'});
+    gScaled = mk('g',{},clipG);
+    // lanes background
+    [[L1,'10R'],[L2,'5.5R']].forEach(([y,l])=>{ svg.insertBefore(mk('rect',{x:m.l,y,width:PW,height:LH,fill:css('--surface2'),rx:4}), clipG); });
+    const sx = PW/(view[1]-view[0]);
+    gScaled.setAttribute('transform',`translate(${m.l - view[0]*sx} 0) scale(${sx} 1)`);
+    const lanePhases=(S,y,c)=>{
+      S.PH.forEach(p=>{
+        if (p.t1 < view[0]-1 || p.t0 > view[1]+1) return;
+        let fill=c, op=1, extra={};
+        if (p.k==='rapid') op=1; else if (p.k==='learn') op=.5; else if (p.k==='steady') op=.2;
+        else if (p.k==='low'){ fill='url(#hatch)'; op=.45; }
+        else if (p.k==='cool'){ fill=css('--cool'); op=.55; }
+        else if (p.k==='wait'){ fill=css('--cool'); op=.25; }
+        else return;
+        mk('rect',{x:p.t0,y:y+4,width:Math.max(p.t1-p.t0, 0.6/sx),height:LH-14,fill,opacity:op},gScaled);
+      });
+      S.TEST.forEach(s=>mk('rect',{x:s.cs,y:y+LH-7,width:s.ce-s.cs,height:4,fill:css('--accent'),opacity:.8},gScaled));
+    };
+    if (SH!=='55') lanePhases(S10,L1,css('--s1')); if (SH!=='10') lanePhases(S55,L2,css('--s3'));
+    const path=(S,c)=>{ let d=''; const V=S.V; for(let i=0;i<V.length;i++){ const [x,y]=V[i]; if (x<view[0]-2 && i+1<V.length && V[i+1][0]<view[0]-2) continue; if (x>view[1]+2){ d+='L'+x.toFixed(4)+' '+Y(y).toFixed(2); break; } d+=(d?'L':'M')+x.toFixed(4)+' '+Y(y).toFixed(2);} mk('path',{d,fill:'none',stroke:c,'stroke-width':2,'vector-effect':'non-scaling-stroke','stroke-linejoin':'round'},gScaled); };
+    if (SH!=='55') path(S10,css('--s1')); if (SH!=='10') path(S55,css('--s3'));
+    // overlay: group labels + axis
+    gOver = mk('g',{});
+    const groups=(S,y)=>{
+      let cur=null;
+      const spans=[];
+      S.PH.forEach(p=>{ const g=p.grp; if(!cur||cur.g!==g){ cur={g,t0:p.t0,t1:p.t1}; spans.push(cur);} else cur.t1=p.t1; });
+      spans.forEach(s=>{
+        const x0=X(s.t0), x1=X(s.t1);
+        if (x1<m.l||x0>W-m.r) return;
+        mk('line',{x1:Math.max(m.l,x0),x2:Math.max(m.l,x0),y1:y-2,y2:y+LH+2,stroke:css('--ink'),'stroke-width':1},gOver);
+        const w=Math.min(x1,W-m.r)-Math.max(x0,m.l);
+        if (w>26) mk('text',{x:Math.max(x0,m.l)+3,y:y-4,'font-size':10.5,'font-weight':700,fill:css('--ink2')},gOver).textContent=s.g==='COOL'?'降溫':s.g;
+      });
+      const e=S.TEND; if (X(e)>=m.l && X(e)<=W-m.r){ mk('line',{x1:X(e),x2:X(e),y1:y,y2:y+LH,stroke:css('--good'),'stroke-width':2},gOver); }
+    };
+    if (SH!=='55') groups(S10,L1); if (SH!=='10') groups(S55,L2);
+    mk('text',{x:m.l-6,y:L1+LH/2+4,'text-anchor':'end','font-size':11.5,'font-weight':700,fill:css('--s1')},gOver).textContent='10R';
+    mk('text',{x:m.l-6,y:L2+LH/2+4,'text-anchor':'end','font-size':11.5,'font-weight':700,fill:css('--s3')},gOver).textContent='5.5R';
+    const span=view[1]-view[0]; const step=[1,2,5,10,20,30,60].find(s=>span/s<=12)||60;
+    for(let s=Math.ceil(view[0]/step)*step; s<=view[1]; s+=step){
+      mk('line',{x1:X(s),x2:X(s),y1:CT,y2:L2+LH,stroke:grid,'stroke-width':.8},gOver);
+      mk('text',{x:X(s),y:AX,'text-anchor':'middle','font-size':11.5,fill:mut,'font-family':'IBM Plex Mono, monospace'},gOver).textContent=s+' s';
+    }
+    svg.insertBefore(gOver, clipG);
+    cursor = mk('line',{y1:CT,y2:L2+LH+4,stroke:css('--ink'),'stroke-width':1.3});
+    d10 = mk('circle',{r:5,fill:css('--s1'),stroke:css('--surface'),'stroke-width':2});
+    d55 = mk('circle',{r:5,fill:css('--s3'),stroke:css('--surface'),'stroke-width':2});
+    const mkTag = c => { const g=mk('g',{}); g._r=mk('rect',{rx:4,fill:css('--surface'),stroke:css(c),'stroke-width':1.2},g); g._t=mk('text',{'font-size':12,'font-weight':700,fill:css('--ink')},g); return g; };
+    tag10 = mkTag('--s1'); tag55 = mkTag('--s3');
+    const hit = mk('rect',{x:m.l,y:CT,width:PW,height:L2+LH-CT,fill:'transparent',style:'cursor:ew-resize'});
+    const seek=ev=>{ const b=svg.getBoundingClientRect(); const sxp=(ev.clientX-b.left)*W/b.width; setT(Math.max(0,Math.min(TMAX,view[0]+(sxp-m.l)/PW*(view[1]-view[0])))); };
+    hit.addEventListener('pointerdown',ev=>{ stop(); hit.setPointerCapture(ev.pointerId); seek(ev); });
+    hit.addEventListener('pointermove',ev=>{ if(ev.buttons) seek(ev); });
+    update();
+  }
+
+  function phaseAt(S,x){ for(let i=S.PH.length-1;i>=0;i--){ const p=S.PH[i]; if (x>=p.t0) return p; } return S.PH[0]; }
+  function card(el,S,x){
+    const T=interp(S.Vm,x), Te=interp(S.V,x), p=phaseAt(S,x);
+    const done = x>=S.TEND;
+    let lastMsg='—'; for(const q of S.MS){ if(q.t<=x) lastMsg=q.text; }
+    let coll='';
+    S.TEST.forEach((s,i)=>{ if (x>=s.cs && x<s.ce) coll=`HS${i+1}：${Math.min(450,Math.floor((x-s.cs)/params().Ts)+1)} / 450 筆`; });
+    let st = KIND[p.k]||p.k;
+    if (p.k==='steady') st += p.grp.startsWith('CALI')?'（校正穩定確認 5 s）':(p.grp.startsWith('HS')?'（維持 20 s）':'（等 REF 5 s 逾時）');
+    el.innerHTML = done ? `<dt>狀態</dt><dd><span class="pill" style="background:var(--good-bg);color:var(--good)">流程完成</span>　${S.TEND.toFixed(1)} s</dd><dt>溫度</dt><dd class="mono">${T.toFixed(1)}°C</dd><dt>最後訊息</dt><dd class="mono">${lastMsg}</dd>`
+    : `<dt>階段</dt><dd><b>${p.grp}</b>${p.grp.startsWith('REF')?' 第 '+p.n+' 輪':''} ${GOAL[p.grp]?'<span class="pill">'+GOAL[p.grp]+'</span>':''}</dd>
+       <dt>G030</dt><dd>${st}</dd>
+       <dt>目標電壓</dt><dd class="mono">${p.tgt? p.tgt+' v16（'+(p.tgt/16).toFixed(0)+' mV）':'—'}</dd>
+       <dt>溫度</dt><dd class="mono">平均 ${T.toFixed(1)}°C　元件 ${Te.toFixed(1)}°C</dd>
+       <dt>F407</dt><dd>${F407(p.grp)}${coll?'　<span class="pill">'+coll+'</span>':''}</dd>
+       <dt>最後訊息</dt><dd class="mono">${lastMsg}</dd>`;
+  }
+  function setT(v){ t=v; $('t').value=v; if(viewMode==='follow'){ const nv=[Math.max(0,t-15),Math.max(0,t-15)+30]; if (Math.abs(nv[0]-view[0])>0.001){ view=nv; build(); return; } } update(); }
+  function update(){
+    $('clock').innerHTML = t.toFixed(2)+' s <small>自 Start 起</small>';
+    const inView = t>=view[0] && t<=view[1];
+    cursor.setAttribute('visibility',inView?'visible':'hidden');
+    d10.setAttribute('visibility',inView&&SH!=='55'?'visible':'hidden');
+    d55.setAttribute('visibility',inView&&SH!=='10'?'visible':'hidden');
+    cursor.setAttribute('x1',X(t)); cursor.setAttribute('x2',X(t));
+    d10.setAttribute('cx',X(t)); d10.setAttribute('cy',Y(interp(S10.V,t)));
+    d55.setAttribute('cx',X(t)); d55.setAttribute('cy',Y(interp(S55.V,t)));
+    placeTag(tag10, S10, t, inView && SH!=='55', false);
+    placeTag(tag55, S55, t, inView && SH!=='10', SH==='both');
+    card($('c10'),S10,t); card($('c55'),S55,t);
+    const p10=phaseAt(S10,t);
+    // compare progress: time at which 5.5R entered the same group start
+    const start=(S,g)=>{ const f=S.PH.find(p=>p.grp===g); return f?f.t0:null; };
+    const a=start(S10,p10.grp), b=start(S55,p10.grp);
+    const d = (a!=null&&b!=null)? a-b : 0;
+    $('lead').textContent = t>=S10.TEND ? '10R 已完成' : (Math.abs(d)<0.005 ? `${p10.grp}：兩邊同時開始` : `${p10.grp}：5.5R ${d>0?'早':'晚'} ${Math.abs(d).toFixed(2)} s 開始`);
+  }
+  function tick(now){ if(!playing) return; const dt=(now-last)/1000; last=now; let v=t+dt*(+$('speed').value); if(v>=TMAX){v=TMAX;stop();} setT(v); raf=requestAnimationFrame(tick); }
+  function stop(){ playing=false; cancelAnimationFrame(raf); $('play').textContent='▶ 播放'; }
+  $('play').addEventListener('click',()=>{ if(playing){stop();return;} if(t>=TMAX) setT(0); playing=true; last=performance.now(); $('play').textContent='❚❚ 暫停'; raf=requestAnimationFrame(tick); });
+  $('t').addEventListener('input',()=>{ stop(); setT(+$('t').value); });
+  document.querySelectorAll('.grp-btns button[data-v]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
+  document.querySelectorAll('.grp-btns button[data-h]').forEach(b=>b.addEventListener('click',()=>{
+    SH=b.dataset.h;
+    document.querySelectorAll('.grp-btns button[data-h]').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
+    $('card10').hidden = SH==='55'; $('card55').hidden = SH==='10';
+    $('lead').hidden = SH!=='both';
+    build();
+  }));
+  ['pV','pTa','pTau','pTs','pLoop','pR50','pCool'].forEach(id=>$(id).addEventListener('change',run));
+  run();
+  const mq=window.matchMedia('(prefers-color-scheme: dark)');
+  const rebuild=()=>{ build(); pulseView(params()); };
+  mq.addEventListener && mq.addEventListener('change',rebuild);
+  new MutationObserver(rebuild).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+</body>
+</html>
