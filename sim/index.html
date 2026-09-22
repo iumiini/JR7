@@ -459,10 +459,10 @@ html[data-lang="zh"] [data-l="ja"]{display:none!important}
     const bb=g._t.getBBox(), w=bb.width+12, h=20;
     // fixed row at the top of the plot, following the cursor horizontally only (no jitter)
     const cx=X(x);
-    let tx = cx+8; if (tx+w > W-m.r) tx = cx-8-w;
+    let lx = cx+8; if (lx+w > W-m.r) lx = cx-8-w;
     const ty = CT + 4 + (below ? h+4 : 0);
-    g._r.setAttribute('x',tx); g._r.setAttribute('y',ty); g._r.setAttribute('width',w); g._r.setAttribute('height',h);
-    g._t.setAttribute('x',tx+6); g._t.setAttribute('y',ty+14);
+    g._r.setAttribute('x',lx); g._r.setAttribute('y',ty); g._r.setAttribute('width',w); g._r.setAttribute('height',h);
+    g._t.setAttribute('x',lx+6); g._t.setAttribute('y',ty+14);
   }
 
   const KIND_J = {start:'起動チェック（13 ms）',rapid:'heater_stage_rapid（100 ms パルスで昇温）',learn:'heater_stage_learning（50 ms パルス、毎回目標 −5°C まで冷却）',steady:'heater_stage_steady',low:'heater_stage_steadyLow（目標 −5°C で待機）',wait:'rapid：目標が現在温度より低い → 加熱せず 5 s タイムアウト待ち',cool:'加熱オフ、自然冷却',f407:'F407 コマンド送信／応答待ち'};
