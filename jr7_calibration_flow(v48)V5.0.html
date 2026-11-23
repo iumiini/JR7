@@ -54,7 +54,16 @@
         .pc-side h3 { margin: 0 0 6px; font-size: 15px; }
         .pc-side ul { margin: 4px 0 6px; padding-left: 16px; }
         .pc-side li { margin: 1px 0; }
-        .pc-side .spacer { flex: 1; }
+        .pc-side .spacer { flex: 1; min-height: 8px; }
+        .serial-log { margin-top: 4px; }
+        .serial-log .log-title { font-weight: bold; font-size: 11px; margin-bottom: 2px; }
+        .serial-log .log-body { background: #10141a; color: #d6dde6; border-radius: 4px; padding: 5px 6px; min-height: 120px; max-height: 220px; overflow-y: auto; font-family: "IBM Plex Mono", Consolas, monospace; font-size: 10px; line-height: 1.35; }
+        .serial-log .log-line { white-space: pre-wrap; word-break: break-all; tab-size: 2; margin-bottom: 3px; animation: logIn .3s ease-out; }
+        .serial-log .log-line .dir { display: inline-block; font-weight: bold; margin-right: 4px; }
+        .serial-log .log-line.rx .dir { color: #ffb454; }
+        .serial-log .log-line.tx .dir { color: #59c2ff; }
+        .serial-log .log-empty { color: #6b7684; }
+        @keyframes logIn { from { opacity: 0; transform: translateY(3px); } }
         .pc-side .device-button { font-size: 12px; padding: 8px 10px; width: 100%; }
 
         /* 連接線 */
@@ -68,8 +77,8 @@
         .data-flow.device-to-pc, .data-flow.notify-pc { animation: dataToPC 2s ease-in-out forwards; }
         .data-flow.pc-to-device { animation: dataToDEVICE 2s ease-in-out forwards; }
         .data-flow:not(.device-to-pc):not(.pc-to-device):not(.notify-pc) { left: 25%; }
-        @keyframes dataToPC { 0% { left: 48%; opacity: 1; } 100% { left: 14%; opacity: 1; } }
-        @keyframes dataToDEVICE { 0% { left: 14%; opacity: 1; } 100% { left: 48%; opacity: 1; } }
+        @keyframes dataToPC { 0% { left: 48%; opacity: 1; } 100% { left: 30%; opacity: 1; } }
+        @keyframes dataToDEVICE { 0% { left: 30%; opacity: 1; } 100% { left: 48%; opacity: 1; } }
 
         /* 治具端 */
         .device-side { flex: 1; min-width: 500px; background: #fff2e6; border: 2px solid #ff7f00; border-radius: 10px; padding: 10px 12px; font-size: 12px; display: flex; gap: 12px; align-items: flex-start; }
@@ -212,6 +221,10 @@
                             <li>資料儲存 .csv 格式</li>
                         </ul>
                         <div id="pcStatus" class="status-display">連線正常 / 接続正常</div>
+                        <div class="serial-log">
+                            <div class="log-title">📟 Serial 收發紀錄 / シリアルログ</div>
+                            <div class="log-body" id="serialLog"></div>
+                        </div>
                         <div class="spacer"></div>
                         <button class="device-button" onclick="sendAsciiCommand()" id="asciiBtn" disabled>發送ASCII "1" 指令<br><small>ASCII "1" コマンド送信</small></button>
                     </div>
@@ -418,7 +431,7 @@ const ICONS = {
         // ================================================================
         const MODE_VALUES = {
             cali: ['1.576V ( 79.48)', '1.675V (100.2)', '1.762V (119.58)', '1.848V (140.18)'],
-            test: ['77.89 ( 73.98~ 80.13)', '99.70 ( 93.74~100.89)', '119.48 (119.00~120.21)', '139.05 (138.37~139.65)']
+            test: ['79.23 ( 73.98~ 80.13)', '100.28 ( 93.74~100.89)', '119.66 (119.00~120.21)', '139.20 (138.37~139.65)']   // 平均值 = PC 收到的資料；範圍沿用實機照片
         };
         const SCREEN_TEXT = {
             0:     { cond: 'Cali Start' },
@@ -532,7 +545,8 @@ const ICONS = {
         // ---------------- 溫度曲線（示意：照實機照片的 80→100→120→140 階梯，數值非實測） ----------------
         let simTemp = 27.68;
         const tempHist = [];
-        const HIST_MAX = 140;   // 一頁約 14 格；畫滿就清空從左邊重畫（實機也是如此）
+        const TICK_MS = 80;      // 取樣間隔：演示是加速模擬，曲線也跟著加速
+        const HIST_MAX = 150;    // 一頁 150 點 ≈ 12 秒畫滿；畫滿就清空從左邊重畫（實機也是如此）
         const LEVELS = [80, 100, 120, 140];
         function targetTemp() {
             const s = currentStep;
@@ -556,12 +570,45 @@ const ICONS = {
         function onStepChanged() {
             // 實機：開始校正、自動進入測試、流程結束時曲線清空重畫
             if (currentStep === 0 || currentStep === 5 || currentStep === 11 || currentStep === -1) tempHist.length = 0;
+            // PC 端 Serial 紀錄（依實機 PC 接收資料 capture.txt）
+            if (currentStep === -1 || (typeof currentStep === 'number' && currentStep <= 7)) clearSerialLog();
+            if (currentStep === 8) serialLog('rx', SERIAL_CAPTURE.waiting);
+            if (currentStep === 9) serialLog('tx', SERIAL_CAPTURE.command);
+            if (currentStep === 10) SERIAL_CAPTURE.result.forEach((l, i) => flowTimers.push(setTimeout(() => serialLog('rx', l), 400 + i * 700)));
+        }
+
+        // ---------------- PC 端 Serial 收發紀錄 ----------------
+        // 內容照實機 PC 接收資料原樣（\t = Tab）；4 個溫度 = 測試平均值，其後 4 個整數與 OK 照錄
+        const SERIAL_CAPTURE = {
+            waiting: '[CALI] Waiting for command (send 1)',
+            command: '1',
+            result: [
+                'sumitomo PC\tjr7_cali_unit3\t',
+                '582_5090300_2303_00000015\t79.23\t100.28\t119.66\t139.20\t3872\t6847\t9225\t11353\tOK'
+            ]
+        };
+        function clearSerialLog() {
+            document.getElementById('serialLog').innerHTML = '<div class="log-empty">（等待通訊…）</div>';
+        }
+        function serialLog(dir, text) {
+            const box = document.getElementById('serialLog');
+            const empty = box.querySelector('.log-empty');
+            if (empty) empty.remove();
+            const line = document.createElement('div');
+            line.className = 'log-line ' + dir;
+            const tag = document.createElement('span');
+            tag.className = 'dir';
+            tag.textContent = dir === 'rx' ? 'RX◀' : 'TX▶';
+            line.appendChild(tag);
+            line.appendChild(document.createTextNode(text));
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
         }
         function tickTemp() {
             checkStepChange();
             const tgt = targetTemp();
-            const k = tgt > simTemp ? 0.25 : 0.12;    // 升溫快、降溫較慢，讓每段平台明顯
-            simTemp += (tgt - simTemp) * k + (Math.random() - 0.5) * 0.6;
+            const k = tgt > simTemp ? 0.09 : 0.045;   // 升溫快、降溫較慢，讓每段平台明顯（以 80 ms 取樣換算）
+            simTemp += (tgt - simTemp) * k + (Math.random() - 0.5) * 0.5;
             if (tgt === 27.68 && Math.abs(tgt - simTemp) < 0.5) simTemp = 27.6 + Math.random() * 0.2;
             const recording = currentStep !== -1 && currentStep !== 11;
             if (recording) {
@@ -966,9 +1013,10 @@ const ICONS = {
             if (autoMode) startAutoAnimation();
         }
 
+        clearSerialLog();
         refreshExternalButtons();
         updateDisplay();
-        setInterval(tickTemp, 250);
+        setInterval(tickTemp, TICK_MS);
         tickTemp();
     </script>
 </body>
