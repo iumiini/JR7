@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR7校正治具操作流程 V5.0</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, "Noto Sans TC", sans-serif; margin: 0; padding: 12px; background-color: #e1f5fe; }
+        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 10px; padding: 14px 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        /* ===== 標題列 + 操作面板（V5.0 壓縮版） ===== */
+        .topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 8px; }
+        .title { margin: 0; color: #333; font-size: 20px; line-height: 1.2; }
+        .title small { font-size: 13px; color: #666; font-weight: normal; margin-left: 8px; }
+
+        .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 6px 10px; }
+        .control-group { display: flex; align-items: center; gap: 4px; }
+        .control-group + .control-group { border-left: 1px solid #dee2e6; padding-left: 14px; }
+        .control-group > label { font-size: 12px; font-weight: bold; color: #555; margin-right: 4px; white-space: nowrap; line-height: 1.15; text-align: right; }
+        .control-group > label small { display: block; font-weight: normal; color: #888; font-size: 10px; }
+
+        button { font-family: inherit; background: #007bff; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; line-height: 1.15; }
+        button small { font-size: 10px; opacity: .85; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+
+        .mode-toggle { background: #28a745; border-radius: 14px; font-weight: bold; transition: all 0.2s; }
+        .mode-toggle.inactive { background: #adb5bd; font-weight: normal; }
+        .mode-toggle:hover { filter: brightness(0.95); }
+
+        .instruction { font-size: 12px; color: #666; margin: 0 0 8px; }
+
+        /* 進度條 + 當前狀態合併成一列 */
+        .status-strip { display: flex; align-items: center; gap: 12px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 6px 12px; margin-bottom: 10px; color: #155724; font-size: 14px; }
+        .status-strip .label { font-weight: bold; white-space: nowrap; }
+        .status-strip #currentStatus { flex: 1; }
+        .status-strip #currentStatus small { margin-left: 8px; opacity: .8; font-size: 12px; }
+        .status-strip #currentStatus br { display: none; }
+        .progress-bar { width: 180px; flex: none; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: 0%; transition: width 0.5s ease; }
+
+        .error-message { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 8px; border-radius: 5px; margin: 0 0 10px; text-align: center; font-weight: bold; }
+
+        /* ===== 主區域 ===== */
+        .main-content { display: flex; gap: 16px; align-items: flex-start; }
+        .flow-diagram { flex: 1.3; min-width: 790px; }
+        .flow-steps { flex: 1; min-width: 440px; }
+
+        .diagram-area { display: flex; align-items: stretch; gap: 0; position: relative; }
+
+        /* PC 端（V5.0 縮小） */
+        .pc-side { flex: 0 0 190px; background: #e6f3ff; border: 2px solid #007bff; border-radius: 10px; padding: 10px 12px; font-size: 12px; display: flex; flex-direction: column; }
+        .pc-side h3 { margin: 0 0 6px; font-size: 15px; }
+        .pc-side ul { margin: 4px 0 6px; padding-left: 16px; }
+        .pc-side li { margin: 1px 0; }
+        .pc-side .spacer { flex: 1; }
+        .pc-side .device-button { font-size: 12px; padding: 8px 10px; width: 100%; }
+
+        /* 連接線 */
+        .connection { flex: 0 0 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; z-index: 2; }
+        .connection .arrows { display: flex; gap: 2px; }
+        .usb-port { background: #6c757d; color: white; padding: 6px 8px; border-radius: 5px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .arrow { font-size: 20px; color: #007bff; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .data-flow { position: absolute; top: calc(50% + 34px); transform: translateX(-50%); background: #ff6b6b; color: white; padding: 4px 10px; border-radius: 15px; font-size: 12px; opacity: 0; transition: opacity 0.5s; white-space: nowrap; z-index: 20; pointer-events: none; }
+        .data-flow.device-to-pc, .data-flow.notify-pc { animation: dataToPC 2s ease-in-out forwards; }
+        .data-flow.pc-to-device { animation: dataToDEVICE 2s ease-in-out forwards; }
+        .data-flow:not(.device-to-pc):not(.pc-to-device):not(.notify-pc) { left: 25%; }
+        @keyframes dataToPC { 0% { left: 48%; opacity: 1; } 100% { left: 14%; opacity: 1; } }
+        @keyframes dataToDEVICE { 0% { left: 14%; opacity: 1; } 100% { left: 48%; opacity: 1; } }
+
+        /* 治具端 */
+        .device-side { flex: 1; min-width: 500px; background: #fff2e6; border: 2px solid #ff7f00; border-radius: 10px; padding: 10px 12px; font-size: 12px; display: flex; gap: 12px; align-items: flex-start; }
+        .device-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+        .device-side h3 { margin: 0; font-size: 15px; }
+        .device-spec { line-height: 1.5; }
+        .device-spec ul { margin: 2px 0 0; padding-left: 16px; }
+        .device-spec small { color: #777; }
+
+
+
+        /* ===== 治具實機畫面（直式 LCD：上白色資訊區 + 下黑色溫度曲線） ===== */
+        .lcd-bezel { flex: 0 0 292px; background: #1c1f22; border-radius: 10px; padding: 9px; box-shadow: 0 3px 8px rgba(0,0,0,.35); }
+        .lcd { background: #eef4fb; border-radius: 3px; overflow: hidden; font-family: Arial, Helvetica, sans-serif; color: #333; position: relative; user-select: none; }
+        .lcd-title { text-align: center; font-weight: bold; font-size: 19px; padding: 6px 0 4px; background: #dfe8f3; color: #444; }
+        .lcd-usb { position: absolute; right: 8px; top: 38px; width: 28px; height: 28px; image-rendering: pixelated; }
+        .lcd-rows { padding: 4px 10px 0; }
+        .lcd-row { display: flex; align-items: baseline; font-size: 15px; height: 21px; }
+        .lcd-row .k { width: 98px; text-align: right; padding-right: 6px; color: #444; flex: none; white-space: nowrap; }
+        .lcd-row .v { color: #3a4fd0; font-size: 13px; white-space: pre; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lcd-row.sn .k { width: 34px; text-align: left; }
+        .lcd-row.sn .v { font-size: 11px; }
+        .lcd-result.green { color: #2fd52f !important; font-weight: bold; }
+        .lcd-btns { display: flex; gap: 10px; padding: 6px 10px; }
+        .lcd-btn { flex: 1; font-family: Arial, sans-serif; font-weight: bold; font-size: 17px; height: 40px; padding: 0 4px; border-radius: 4px; border: 1px solid #8fa3bd; background: linear-gradient(#f4f8fd, #d4dfec); color: #333; cursor: pointer; white-space: nowrap; animation: none; margin: 0; }
+        .lcd-btn:hover { background: linear-gradient(#ffffff, #dbe5f1); }
+        .lcd-btn:disabled { color: #C0C0C0; background: linear-gradient(#eef2f7, #e3e9f1); border-color: #c8d2de; cursor: not-allowed; }
+        .lcd-btn.small-font { font-size: 14px; }
+        .lcd-btn.ready { box-shadow: 0 0 0 2px rgba(40,167,69,.55); animation: lcdReady 2s ease-in-out infinite; }
+        @keyframes lcdReady { 50% { box-shadow: 0 0 0 4px rgba(40,167,69,.25); } }
+        .lcd-bottom { display: grid; grid-template-columns: 1fr 34px 86px; grid-template-rows: 21px 21px; column-gap: 4px; align-items: center; padding: 2px 10px 6px; }
+        .lcd-bottom .lcd-row { height: 21px; }
+        .lcd-bottom .lcd-row .k { width: 88px; }
+        .lcd-rot { grid-column: 2; grid-row: 2; width: 28px; height: 28px; background-size: 100% 100%; position: relative; }
+        .lcd-rot img { width: 100%; height: 100%; display: block; clip-path: circle(34% at 50% 50%); }
+        .lcd-rot.spin img { animation: rotSpin .64s steps(8) infinite; }
+        @keyframes rotSpin { to { transform: rotate(360deg); } }
+        .lcd-cfg { grid-column: 3; grid-row: 1 / span 2; height: 40px; }
+        .lcd-result.red { color: #e02424 !important; font-weight: bold; }
+        .lcd-chart { display: block; width: 100%; height: 230px; background: #0b0d1c; }
+        .hw-row { display: flex; justify-content: center; gap: 16px; color: #ccc; font-size: 11px; padding-top: 7px; }
+        .hw-led { display: inline-flex; align-items: center; gap: 5px; }
+        .hw-led .dot { width: 11px; height: 11px; border-radius: 50%; background: #4a4a4a; border: 1px solid #111; }
+        .hw-led.on .dot { background: #ff3b30; box-shadow: 0 0 8px #ff3b30; animation: ledBlink 1s steps(1) infinite; }
+        @keyframes ledBlink { 50% { background: #4a4a4a; box-shadow: none; } }
+        .ext-row { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+        .ext-row select { font-size: 12px; padding: 3px; border-radius: 3px; }
+        .legend { font-size: 11px; color: #666; background: #fff; border: 1px dashed #e0b080; border-radius: 5px; padding: 6px 8px; line-height: 1.5; }
+        .legend img { width: 16px; height: 16px; vertical-align: -3px; }
+
+        .device-button { background: #28a745; color: white; border: none; padding: 9px 18px; border-radius: 5px; font-size: 14px; font-weight: bold; cursor: pointer; margin: 0 4px; min-width: 76px; animation: breathe 2s ease-in-out infinite; }
+        @keyframes breathe { 0%, 100% { box-shadow: 0 0 5px rgba(40,167,69,.5); transform: scale(1); } 50% { box-shadow: 0 0 16px rgba(40,167,69,.8); transform: scale(1.02); } }
+        .device-button:hover { background: #218838; }
+        .device-button:disabled { background: #6c757d; cursor: not-allowed; animation: none; }
+
+        .status-display { text-align: center; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; padding: 6px; margin: 6px 0; font-size: 13px; font-weight: bold; min-height: 30px; display: flex; align-items: center; justify-content: center; }
+
+        .prerequisite-check { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 6px 10px; border-radius: 5px; font-size: 12px; }
+        .external-controls { text-align: center; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 6px; font-size: 12px; }
+        .status-button { background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 12px; cursor: pointer; margin: 2px; transition: all 0.3s; }
+        .status-button.inactive { background: #dc3545; }
+
+        .waiting-blink { animation: slowBlink 2s ease-in-out infinite; }
+        @keyframes slowBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        .highlight { animation: highlight 1s ease-in-out; }
+        @keyframes highlight { 0%, 100% { box-shadow: 0 4px 8px rgba(0,0,0,0.1); } 50% { border-color: #ffc107; box-shadow: 0 8px 16px rgba(255,193,7,0.4); } }
+
+        /* ===== 流程步驟 ===== */
+        .flow-steps { background: #f8f9fa; border-radius: 10px; padding: 10px 12px; }
+        .flow-steps h3 { margin: 0 0 8px; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 6px; text-align: center; font-size: 15px; }
+        .flow-steps h3 small { font-size: 12px; color: #666; font-weight: normal; margin-left: 6px; }
+        .steps-container { display: flex; gap: 12px; }
+        .steps-column { flex: 1; background: white; border-radius: 8px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .column-title { text-align: center; font-weight: bold; color: #007bff; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #dee2e6; font-size: 13px; }
+        .step-item { padding: 7px 10px; margin: 4px 0; border-radius: 6px; border-left: 4px solid #e9ecef; background: #f8f9fa; transition: all 0.3s; font-size: 13px; position: relative; }
+        .step-item small { font-size: 11px; }
+        .step-item.active { background: #28a745; color: white; border-left-color: #155724; transform: scale(1.02); box-shadow: 0 4px 8px rgba(40,167,69,0.3); }
+        .step-item.completed { background: #6c757d; color: white; border-left-color: #495057; }
+        .step-item.pending { background: #f8f9fa; color: #6c757d; border-left-color: #e9ecef; }
+        .step-item.active.waiting-blink { background: #ffc107; color: #333; }
+        .step-arrow { text-align: center; font-size: 13px; color: #007bff; margin: 0; line-height: 1; }
+        .step-number { background: #007bff; color: white; border-radius: 50%; min-width: 20px; height: 20px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; margin-right: 6px; }
+        .step-item.active .step-number { background: #155724; }
+        .step-item.completed .step-number { background: #495057; }
+        .step-item.pending .step-number { background: #adb5bd; }
+
+        @media (max-width: 1300px) {
+            .main-content { flex-direction: column; }
+            .flow-diagram, .flow-steps { min-width: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1 class="title">JR7校正治具操作流程動畫 V5.0<small>JR7校正治具操作フロー動画 V5.0</small></h1>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label>演示模式<small>デモモード</small></label>
+                    <button class="mode-toggle" onclick="setAutoMode()" id="autoModeBtn">自動<br><small>自動デモ</small></button>
+                    <button class="mode-toggle inactive" onclick="setManualMode()" id="manualModeBtn">手動<br><small>手動デモ</small></button>
+                </div>
+                <div class="control-group">
+                    <label>演示情境<small>デモシナリオ</small></label>
+                    <button class="mode-toggle" onclick="setNormalTest()" id="normalTestBtn">測試正常<br><small>テスト正常</small></button>
+                    <button class="mode-toggle inactive" onclick="setAbnormalTest()" id="abnormalTestBtn">測試異常<br><small>テスト異常</small></button>
+                </div>
+                <div class="control-group">
+                    <label>流程控制<small>フロー制御</small></label>
+                    <button onclick="nextStep()" id="nextStepBtn" style="display: none;">下一步<br><small>次へ</small></button>
+                    <button onclick="stopAnimation()">停止<br><small>停止</small></button>
+                    <button onclick="reset()">重置<br><small>リセット</small></button>
+                </div>
+            </div>
+        </div>
+
+        <p class="instruction"><strong>使用說明：</strong><span id="modeInstruction">選擇演示模式後，按下治具上的 CALI. 或 TEST 按鍵開始自動演示</span></p>
+
+        <div class="status-strip" id="currentInfo">
+            <span class="label">當前狀態：</span>
+            <span id="currentStatus">準備開始</span>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <div class="main-content">
+            <div class="flow-diagram">
+                <div class="diagram-area">
+                    <div class="pc-side" id="pcSide">
+                        <h3>💻 PC端</h3>
+                        <div><strong>系統:</strong> Windows 11</div>
+                        <div><strong>連接:</strong> USB-C 接埠</div>
+                        <div><strong>功能:</strong></div>
+                        <ul>
+                            <li>Serial通訊 (Command發送)</li>
+                            <li>Serial通訊 (Data接收)</li>
+                            <li>資料儲存 .csv 格式</li>
+                        </ul>
+                        <div id="pcStatus" class="status-display">連線正常 / 接続正常</div>
+                        <div class="spacer"></div>
+                        <button class="device-button" onclick="sendAsciiCommand()" id="asciiBtn" disabled>發送ASCII "1" 指令<br><small>ASCII "1" コマンド送信</small></button>
+                    </div>
+
+                    <div class="connection">
+                        <div class="arrows"><span class="arrow">⬅</span><span class="arrow">➡</span></div>
+                        <div class="usb-port">USB-C</div>
+                    </div>
+                    <div class="data-flow" id="dataFlow"></div>
+
+                    <div class="device-side" id="deviceSide">
+                        <!-- 治具實機畫面（直式）：依 2026-11-22 圖示/按鈕狀態文件 -->
+                        <div class="lcd-bezel">
+                            <div class="lcd" id="deviceLcd">
+                                <div class="lcd-title">JR7 Calibration</div>
+                                <img class="lcd-usb" id="usbIcon" alt="USB">
+                                <div class="lcd-rows">
+                                    <div class="lcd-row sn"><span class="k">SN.:</span><span class="v" id="lcdSN"></span></div>
+                                    <div class="lcd-row"><span class="k">Cond.:</span><span class="v" id="lcdCond"></span></div>
+                                    <div class="lcd-row"><span class="k">MODE&nbsp;&nbsp;80C:</span><span class="v" id="lcdM80"></span></div>
+                                    <div class="lcd-row"><span class="k">MODE 100C:</span><span class="v" id="lcdM100"></span></div>
+                                    <div class="lcd-row"><span class="k">MODE 120C:</span><span class="v" id="lcdM120"></span></div>
+                                    <div class="lcd-row"><span class="k">MODE 140C:</span><span class="v" id="lcdM140"></span></div>
+                                </div>
+                                <div class="lcd-btns">
+                                    <button class="lcd-btn" id="caliBtn" onclick="onCaliBtn()">CALI.</button>
+                                    <button class="lcd-btn" id="testBtn" onclick="onTestBtn()">TEST</button>
+                                </div>
+                                <div class="lcd-bottom">
+                                    <div class="lcd-row"><span class="k">RESULT :</span><span class="v lcd-result" id="lcdResult"></span></div>
+                                    <div class="lcd-row" style="grid-row:2"><span class="k">Temp. :</span><span class="v" id="lcdTemp"></span></div>
+                                    <div class="lcd-rot" id="rotWrap"><img id="rotIcon" alt="狀態"></div>
+                                    <button class="lcd-btn lcd-cfg" id="cfgBtn" onclick="onCfgBtn()">CFG.</button>
+                                </div>
+                                <canvas class="lcd-chart" id="tempChart" width="548" height="460"></canvas>
+                            </div>
+                            <div class="hw-row">
+                                <span class="hw-led" id="failLed"><span class="dot"></span>失敗 LED</span>
+                                <span class="hw-led" id="buzzer"><span class="dot"></span>蜂鳴器</span>
+                            </div>
+                        </div>
+
+                        <div class="device-info">
+                            <h3>🔧 JR7校正治具</h3>
+                            <div class="device-spec">
+                                <div><strong>系統 / システム:</strong> STM32F407</div>
+                                <div><strong>連接 / 接続:</strong> USB-C（CDC）</div>
+                                <div><strong>功能 / 機能:</strong></div>
+                                <ul>
+                                    <li>Serial通訊 (Command接收)<br><small>シリアル通信（コマンド受信）</small></li>
+                                    <li>Serial通訊 (Data裝置)<br><small>シリアル通信（データ送信）</small></li>
+                                    <li>校正治具操作<br><small>校正治具操作</small></li>
+                                </ul>
+                            </div>
+
+                            <div id="deviceStatus" class="status-display">待機中... / 待機中...</div>
+
+                            <div id="prerequisiteCheck" class="prerequisite-check">
+                                <div>前置條件檢查 / 前提条件チェック：</div>
+                                <div>✅ QR CODE: <span id="qrStatus">已掃描</span></div>
+                                <div>✅ PC連線 / PC接続: <span id="pcConnStatus">正常</span></div>
+                            </div>
+
+                            <div class="external-controls">
+                                <div>外部狀態控制 / 外部状態制御</div>
+                                <div class="ext-row">
+                                    <button class="status-button" onclick="toggleQR()" id="qrButton">已掃描QR CODE</button>
+                                    <button class="status-button" onclick="toggleTemp()" id="tempButton">溫度讀取正常</button>
+                                </div>
+                                <div class="ext-row">
+                                    <label for="usbSelect">USB 狀態：</label>
+                                    <select id="usbSelect" onchange="setUsbState(this.value)">
+                                        <option value="open">COM port 已開啟（DTR=1）</option>
+                                        <option value="enumerated" selected>已列舉、未開 COM（DTR=0）</option>
+                                        <option value="attached">已插線、未列舉</option>
+                                        <option value="none">未插線 / 只有充電</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="legend" id="legend"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-steps">
+                <h3>📋 完整操作流程<small>完全操作フロー</small></h3>
+                <div class="steps-container">
+                    <div class="steps-column">
+                        <div class="column-title">校正流程 (CALI.)<br><small>校正フロー (CALI.)</small></div>
+                        <div class="step-item pending" id="step0">
+                            <span class="step-number">0</span>按下「CALI.」按鍵<br><small>「CALI.」ボタンを押下</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step1">
+                            <span class="step-number">1</span>開始校正模式<br><small>校正モード開始</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step2">
+                            <span class="step-number">2</span>校正中...<br><small>校正中...</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step3">
+                            <span class="step-number">3</span>校正結束判定結果<br><small>校正終了結果判定</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step4">
+                            <span class="step-number">4</span>結束校正模式進入降溫模式<br><small>校正モード終了、冷却モード開始</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                    </div>
+                    
+                    <div class="steps-column">
+                        <div class="column-title">測試流程 (TEST / 接續)<br><small>テストフロー (TEST / 継続)</small></div>
+                        <div class="step-item pending" id="step5">
+                            <span class="step-number">5</span>測試模式中...<br><small>テストモード中...</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step6">
+                            <span class="step-number">6</span>測試模式結束<br><small>テストモード終了</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step7">
+                            <span class="step-number">7</span>將校正與測試結果存入SD卡<br><small>校正・テスト結果をSDカードに保存</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step7-1" style="display: none;">
+                            <span class="step-number">7-1</span>❌ 測試結果NG<br><small>請選擇 START(重新校正) 或 END(結束流程)</small><br><small style="color: #888;">START（再校正）またはEND（終了）を選択</small>
+                        </div>
+                        <div class="step-arrow" id="arrow7-1" style="display: none;">↓</div>
+                        <div class="step-item pending" id="step8">
+                            <span class="step-number">8</span>生產人員確認中，等待PC端發送指令<br><small>生産担当者確認中、PC側コマンド送信待ち</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step9">
+                            <span class="step-number">9</span>校正治具接收指令正確<br><small>校正治具コマンド受信正常</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step10">
+                            <span class="step-number">10</span>將資料送到PC端<br><small>データをPC側に送信</small>
+                        </div>
+                        <div class="step-arrow">↓</div>
+                        <div class="step-item pending" id="step11">
+                            <span class="step-number">11</span>🏁 結束流程<br><small>フロー終了</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ================================================================
+        // 圖示原始圖檔（取自「JR7 Calibration — 圖示與按鈕狀態」文件，32×32）
+        // ================================================================
+const ICONS = {
+    usb_open: 'data:image/png;base64,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',
+    usb_enum: 'data:image/png;base64,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',
+    usb_err: 'data:image/png;base64,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',
+    usb_none: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEzklEQVR4nI1XSUttRxD++niu87TwbRQEjaiIaBzARJxWLhT8BULII//Gv/BIEN7KpeBKwSER4oCYlQPOG9EsjPN4rfDVu31p2z7X13A4faq766v6qrr6tJmYmIAxJgLwyrcx5lcA48aYHwFUmG8NbHy7ff+dIBMAl8aYTQBfjTF/GGNeARDrNRYRC94oIl8A9CPQqExE3slss2N2njOfDlSKyJAxZkhEfgHwmzFml9gxwUXkBwB/AfgEIM1FGQvfgbrt9fVVgaIoSjTQMYw4YozpFxFi/QxgPxKRFKkREYI/i0gewbnQLvb7VPzy8oKamhrU1tZq32cisJ5M54kIMT6JyFcAKYZgHMBPGc9TAQrfeWf7nZ2diOMYx8fHOZny1hMjLSLEHKenn0kN5/lWu57Yh8qenp5QX1+PyspKlJaWoqGhQWUJnocehpiwn0lLOwWkKDTZNcbGnV53dHRkZW1tbcjPz9exJCM8p6KMEe3slCUtoLdWqW30tLm5GWVlZdm5JSUlaGpqwvPzc3Zn5GLCkZWp16EFBH58fFSF6XRalfNN2nt6erIGWsCuri5UVFS8S8ikx47HSYnG1tvbi7q6Ojw8PGB9fR0nJycKsrW1pWFg7Llub29PDSQrV1dXyMvLe5PIocS2mLEbG+sRae7u7kZ7e7vKy8vLMTw8jKmpKRwdHWF/fx9FRUVqHA1ZWVnBzc0NUqmUfpMFvzK6fdeI2LeM1LPP/U3Ks5bGMaqqqnB9fY3CwkJ9bGOfDLAgsTEhXUDq8XPL9uNQCaURZ2dnqK6ufiO7uLjQuVToJif7FoTgo6OjKCgoUDmN2tjYwM7Ojo75eJGfHHabra6u4vDwMAtGRdx6liG/MLmJRUZoAMPEt82J0K6I/RywHpPS6elpjT8Vjo2NobGxEbe3t1heXtYC5DZXqWWDbxrusuUnepS0V7mQlN3d3eH8/BwzMzNqFFloaWnRpLMxd9mj8fTY5g3n8NtlzmUjzrUN1cIoUgZOT08xOzuLkZERDA4O6hh3C8fcA4q7h4Yzh7a3t3VnsO8y8SYJ4dESMoRUEmh3d1dD0tfXlzXCsmUrJB8WsLm5Od0xlgGbBz5OHPI6lxFra2tqBOu/bQwNyzELFxtzhOBMQv8c8E/ZKKFGB/OCFNKI+fl5HBwc6BzKSP3AwIACkiVWSoaBco77h9SbXJMcwK7lroy0Li4uZsF5DvB4ZhleWlrSuCc55n9HoT2dZK19bJWjAfS0tbVV5WSG8XcT7iOG41AOhJqNnQ2F3zY3N/WcKC4u1nxxf1jd9X4OxK7XoYmhXzPfK24zJp4tvz6buYyIQ8dkkveuYvd7YWHhDeW51vrySESucyWf2/dllmb+L4TY+Y7ddc1a+g//DkVEXcilIOQ9m026j+Y7OvWOQGwy8Hvmj1hl3/P4hlrwkAMJMr2jEJsG8FLyt3Np+HDv2uOZ+9392/mI9sxbLz/EJDZDQMG4iPybuSWlMxQFrbexv7+/18JzeXmpJ6ObbAlGUKdefojFSwmNsZfTfQB9xpgvItKf61ZkZSw4k5OT2X9IsmGP44Rd8O3sBv7k5ZSYvI0zBHpVFhHeVoc4KCILAP6zeRFKKoaAhxDB7XkfmpfRQV0LIkLdxNCbMbH/B44QBzHlR1pkAAAAAElFTkSuQmCC',
+    rot_green: 'data:image/png;base64,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',
+    rot_orange: 'data:image/png;base64,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',
+    rot_blue: 'data:image/png;base64,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',
+    rot_yellow: 'data:image/png;base64,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',
+    rot_grey: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFJklEQVR4nI1XSUtmRxQ99fyccIiKA4ITOCCN0hFdROwGwRlcuVZCmvwJ/Qv+hdDZ9NKloOhGTBZZOYADTqiIiASHOI/fDaf6uy/1le9JLhSvXr2qOnc4de8rMzk5CWNMACDJpzHmFwCjxpgfAfxgvgsofLp9/xkzJgD+McasAPhmjPndGJMEQKxkQkQUvElEfgPwGRHCzUQkcpyi33SeM58GFIlItzGmW0R+BvCrMWab2AmCi0g9gD8BlAF45aKUhpGgrjw/PyORSCAIgjdz3fW0VkTEGPNZRIjVCWAvEJFMukZECP4sIhkE50Jd7Pd149zcXDQ2NuL19RUvLy/huNuc9fR0hogQo0xEvgHIJNCoiPwkIq8pZWKB1SoFfHx8RGdnJ/r7+1FSUoKnp6c0BaOMSGG8pjBHqcAXuoZ7RwG6wHQ3QbKzs1FRUYGamhqrCPtDQ0Po6OhARkaGned7wmsMMWG/kAMfUwPf2eQJY0sQLqytrUVTUxMqKyutEipq9YcPH1BdXY21tTUcHh6mecAjJ8PB/keegoIY0thGiwsKCtDV1WUViBLOSyaTVlnObWhowPHxsV0bRWRnrIAKvAHWMW5QWlqKwcFB5OfnhyCUq6sr3N/fo6yszI6x3d7eYmlpCXt7ezYUbHGnSHESPrBLtLy8PBtbPhV8a2sLm5ubODs7Q1ZWFsbGxuyajY0NrKysWGJmZlou2zXqSd9QxUn4RNOJjHt3d7cFpzKU+fl57O7u2nPPOeQBXU2rT09P7ThblFFRYaa8CQGtpBX19fWWULSCrpybm7PgOTk5IfHu7u4wMzNj332rXRK7ZPWVSPiD+t7a2hpusLOzg+3tbZt4COCGSePvA2ufR1LnRHEt8BMGXU+382yr1svLyyFIVIJxx3WMjQryyPJksB+RlPCGA5xYVFRkCaZsPz8/j2V0FMGoLC1vb29HW1ubPU3T09O4ubl5s08QpZWbZK6vr+1m7hx/ftw4reeTxtAo9YI7P+Fq43/0x+PY7DNb+wSMqgvunMB90f7Dw0P4zvjxaGmc4zzh7qMnh8lLFeTJipofuNppsrm4uLBxoxQWFqK4uNiS0wWJKzRqOV3OtRSG8PLyMkzZ7tzA34Cak3gnJychuUgkv97HKaNJrKWlJTyKTFJM0/rT4rYgzqLV1dVQ4+bmZtuYeDSx+Eoo+zmHSYxVU3PG+vp6LFkDnxxcxKzGxHN0dGQ3pUv508FNCaD13uUNx1icWAl7enrCJMU9Dg4O0ngUywFxYxMEmJ2dta5jWPg+PDyMgYEBWwEpJJb+BZWXl6O3t9dWTs7lGiq7sLAQGbrwBE1MTOiva9qvtSYTbjwyMvKmHJNUTCwUfiPp1INampl8mMSYB5QfihVijo+PS9qA0+dGtJCb9/X1oa6uDv9H6PLFxUWrIMOp4FE4CRG55nGPSiy0htrzVExNTdk/YLK7qqoqLVtSmDtYmvmvsL+/b0OgcX8naV2zFqyKSBdDw5uRn/E0qVBITFZGJifmBlZHCr3EkDBt63+CrlXxgJOpC8sqPfDVGPNJRP6bHSNaoEgujT9FScfvenRdV0ekcf4Rk0xfaTEvJX85l4bIBKMWKckYWwKysa/lOqrsaj/1tJcfYhKbWjynLid/O5eGZJQSviJue68+pPrck/92mcTiBZjK0ANseyLyCcAf713N4ipaXF3wvnNPWk4MhnzPRi8Vez55W+3mzVVEFnjUGaj38v574XLeKdxrQUS4NzHszZjY/wKnBMX0b9WqPAAAAABJRU5ErkJggg==',
+};
+
+        let currentStep = -1;
+        let autoMode = true;
+        let manualMode = false;
+        let animationTimer = null;
+        let flowTimers = [];          // sendAsciiCommand 等的延遲計時器
+        let qrScanned = true;         // bSN_Input
+        let usbState = 'enumerated';  // 實機流程中一直是黃色（已列舉），PC 開 COM 送 "1" 後變藍        // open | enumerated | attached | none（cdc_host_detect_state）
+        let pcConnected = true;       // = USB 就緒（ENUMERATED 或 OPEN）
+        let tempAlive = true;         // bTempAlive（SV900 讀溫度成功）
+        let testNormal = true;
+        let fromAbnormalPath = false;
+        let startedBy = null;         // 'cali' | 'test'：哪顆按鈕啟動的流程
+        let ngMode = false;           // NG 模式：CFG. 變 NG_Off、失敗 LED + 蜂鳴器
+        let testLabelLower = false;   // 停止後 TEST 還原成 "Test"（程式就是這個大小寫）
+        const SN_DEMO = '3582_5090300_2303_00000015';   // 照片中的 SN 格式
+
+        const steps = [
+            { pc: "連線正常 / 接続正常", status: "用戶按下治具上的CALI.按鍵<br><small>ユーザーが治具のCALI.ボタンを押下</small>" },
+            { pc: "連線正常 / 接続正常", status: "治具進入校正模式，建立通訊連接<br><small>治具が校正モードに入り、通信接続を確立</small>" },
+            { pc: "連線正常 / 接続正常", status: "治具正在執行校正程序<br><small>治具が校正プロセスを実行中</small>" },
+            { pc: "連線正常 / 接続正常", status: "校正完成，系統判定校正結果<br><small>校正完了、システムが校正結果を判定</small>" },
+            { pc: "連線正常 / 接続正常", status: "治具進入降溫階段，等待溫度穩定<br><small>治具が冷却段階に入り、温度安定を待機</small>" },
+            { pc: "連線正常 / 接続正常", status: "開始執行測試程序，通知PC準備接收<br><small>テストプロセス開始、PC側に受信準備を通知</small>" },
+            { pc: "連線正常 / 接続正常", status: "測試完成，準備存儲數據<br><small>テスト完了、データ保存準備</small>" },
+            { pc: "連線正常 / 接続正常", status: "將校正與測試結果存入SD卡<br><small>校正・テスト結果をSDカードに保存</small>" },
+            { pc: "⏳ 等待發送指令", status: "生產人員確認中，等待PC端發送指令<br><small>生産担当者確認中、PC側コマンド送信待ち</small>" },
+            { pc: "📤 已發送指令", status: "校正治具接收指令正確<br><small>校正治具コマンド受信正常</small>" },
+            { pc: "🔄 接收數據中...", status: "將資料送到PC端<br><small>データをPC側に送信</small>" },
+            { pc: "💾 數據已儲存", status: "整個校正流程完成，數據已安全儲存<br><small>全校正フロー完了、データ安全保存済み</small>" }
+        ];
+        const step7_1 = { pc: "等待用戶選擇", status: "測試結果異常，請選擇重新校正(START)或結束流程(END)<br><small>テスト結果異常、再校正(START)または終了(END)を選択</small>" };
+
+        // ================================================================
+        // 實機畫面文字（依 2026-11-23 實機校正/測試照片）
+        // 每步：cond = Cond. 欄；rows = MODE 欄顯示哪組數值（'cali' 校正電壓 / 'test' 測試溫度）；
+        //       fill = 'progress'（在該步驟中逐列出現）或 'all'（四列都已出現）；result / resultColor
+        // ================================================================
+        const MODE_VALUES = {
+            cali: ['1.576V ( 79.48)', '1.675V (100.2)', '1.762V (119.58)', '1.848V (140.18)'],
+            test: ['77.89 ( 73.98~ 80.13)', '99.70 ( 93.74~100.89)', '119.48 (119.00~120.21)', '139.05 (138.37~139.65)']
+        };
+        const SCREEN_TEXT = {
+            0:     { cond: 'Cali Start' },
+            1:     { cond: 'Cali Start' },
+            2:     { cond: 'RUN',      rows: 'cali', fill: 'progress' },
+            3:     { cond: 'RUN',      rows: 'cali', fill: 'all' },
+            4:     { cond: 'RUN',      rows: 'cali', fill: 'all' },          // 降溫中仍是 RUN + Cali Stop
+            5:     { cond: 'Testing',  rows: 'test', fill: 'progress' },     // 進測試時 MODE 欄清空再逐列出現
+            6:     { cond: 'Testing',  rows: 'test', fill: 'all' },
+            7:     { cond: 'Testing',  rows: 'test', fill: 'all' },
+            8:     { cond: 'Waiting PC...', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
+            9:     { cond: 'Test End', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
+            10:    { cond: 'Test End', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
+            11:    { cond: 'Test End', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
+            '7-1': { cond: 'Testing',  rows: 'test', fill: 'all', result: 'FAIL', resultColor: 'red' }   // FAIL 字樣依文件，未有實機照片
+        };
+        // 自動演示時各步驟停留時間（ms）；校正中 / 測試中要跑完 80→100→120→140 四段
+        const STEP_MS = { 2: 12000, 4: 6000, 5: 12000 };
+        const stepMs = s => STEP_MS[s] || 3000;
+        let stepStartTime = Date.now();
+        let lastStepSeen = null;
+        function stepProgress() { return Math.min(1, (Date.now() - stepStartTime) / stepMs(currentStep)); }
+
+        // ---------------- 狀態判斷（對照文件） ----------------
+        const usbReady = () => usbState === 'open' || usbState === 'enumerated';
+        const isRunning = () => typeof currentStep === 'number' && currentStep >= 0 && currentStep <= 7;
+        const isWaitingPC = () => currentStep === 8;
+        const isEnded = () => currentStep === 11;
+        // 執行階段：0~4 = CALI（含降溫），5~7 = TEST。CaliComplete 後會自動接著跑測試，
+        // 文件的「等 PC 命令」列顯示 CALI. 停用 + Test Stop，所以自動測試階段視為 TEST。
+        const runPhase = () => (typeof currentStep === 'number' && currentStep <= 4) ? 'cali' : 'test';
+
+        function usbIconKey() {   // CALI_UpdateUsbIcon
+            return { open: 'usb_open', enumerated: 'usb_enum', attached: 'usb_err' }[usbState] || 'usb_none';
+        }
+        function rotIconKey() {   // CALI_UpdateRotColor：由上往下第一個成立的
+            if (isWaitingPC()) return 'rot_green';
+            if (isRunning() && runPhase() === 'cali') return 'rot_orange';
+            if (isRunning() && runPhase() === 'test') return 'rot_blue';
+            if (tempAlive) return 'rot_yellow';
+            return 'rot_grey';
+        }
+
+        function setBtn(btn, label, enabled, smallFont) {
+            btn.textContent = label;
+            btn.disabled = !enabled;
+            btn.classList.toggle('small-font', !!smallFont);
+            btn.classList.toggle('ready', enabled && (label === 'CALI.' || label === 'TEST' || label === 'Test') && currentStep === -1);
+        }
+
+        function renderPanel() {
+            const usb = document.getElementById('usbIcon');
+            const rot = document.getElementById('rotIcon');
+            const uk = usbIconKey(), rk = rotIconKey();
+            usb.src = ICONS[uk];
+            rot.src = ICONS[rk];
+            const rw = document.getElementById('rotWrap');
+            rw.style.backgroundImage = `url(${ICONS[rk]})`;
+            rw.classList.toggle('spin', rk !== 'rot_grey');   // 綠/橘/藍/黃旋轉，灰靜態
+
+            const allow = qrScanned && usbReady();
+            const caliBtn = document.getElementById('caliBtn');
+            const testBtn = document.getElementById('testBtn');
+            const cfgBtn = document.getElementById('cfgBtn');
+            const testIdle = testLabelLower ? 'Test' : 'TEST';
+            const cfgLabel = ngMode ? 'NG_Off' : 'CFG.';
+
+            if (currentStep === '7-1') {
+                // 保留 V4.1 的 NG 選擇流程：CALI./TEST 暫時當 START / END
+                setBtn(caliBtn, 'START', true);
+                setBtn(testBtn, 'END', true);
+                setBtn(cfgBtn, cfgLabel, false, ngMode);
+            } else if (isRunning()) {
+                const ph = runPhase();
+                setBtn(caliBtn, ph === 'cali' ? 'Cali Stop' : 'CALI.', ph === 'cali', ph === 'cali');
+                setBtn(testBtn, ph === 'test' ? 'Test Stop' : testIdle, ph === 'test', ph === 'test');
+                setBtn(cfgBtn, cfgLabel, false, ngMode);
+            } else if (isWaitingPC()) {
+                // 等 PC 命令：三顆全部停用（刻意的行為）
+                setBtn(caliBtn, 'CALI.', false);
+                setBtn(testBtn, 'Test Stop', false, true);
+                setBtn(cfgBtn, cfgLabel, false, ngMode);
+            } else {
+                // 待機 / 收到 "1" 之後：SN + USB 就緒才開 CALI / TEST；CFG. 可按
+                setBtn(caliBtn, 'CALI.', allow);
+                setBtn(testBtn, testIdle, allow);
+                setBtn(cfgBtn, cfgLabel, true, ngMode);
+            }
+
+            const t = (currentStep === 11 && fromAbnormalPath) ? {} : (SCREEN_TEXT[currentStep] || {});
+            document.getElementById('lcdSN').textContent = qrScanned ? SN_DEMO : '';
+            document.getElementById('lcdCond').textContent = t.cond || '';
+            const vals = t.rows ? MODE_VALUES[t.rows] : [];
+            const shown = !t.rows ? 0 : (t.fill === 'progress' ? Math.floor(stepProgress() * 4 + 0.001) : 4);
+            ['lcdM80', 'lcdM100', 'lcdM120', 'lcdM140'].forEach((id, i) =>
+                document.getElementById(id).textContent = i < shown ? vals[i] : '');
+            const res = document.getElementById('lcdResult');
+            res.textContent = t.result || '';
+            res.classList.toggle('red', t.resultColor === 'red');
+            res.classList.toggle('green', t.resultColor === 'green');
+
+            document.getElementById('failLed').classList.toggle('on', ngMode);
+            document.getElementById('buzzer').classList.toggle('on', ngMode);
+
+            const usbText = { usb_open: '藍：COM port 已開啟', usb_enum: '黃：已列舉、COM 未開（仍算就緒）', usb_err: '紅：已插線但未列舉，不能傳資料', usb_none: '灰：未插線 / SOF 停止' }[uk];
+            const rotText = { rot_green: '綠：等 PC 送 "1"（最長 100 s）', rot_orange: '橘：CALI 執行中', rot_blue: '藍：TEST 執行中', rot_yellow: '黃：待機，溫度讀取正常', rot_grey: '灰：待機，無溫度資料' }[rk];
+            document.getElementById('legend').innerHTML =
+                `<div><img src="${ICONS[uk]}"> USB 圖示 — ${usbText}</div><div><img src="${ICONS[rk]}"> 旋轉圖示 — ${rotText}</div>`;
+        }
+
+        // ---------------- 溫度曲線（示意：照實機照片的 80→100→120→140 階梯，數值非實測） ----------------
+        let simTemp = 27.68;
+        const tempHist = [];
+        const HIST_MAX = 140;   // 一頁約 14 格；畫滿就清空從左邊重畫（實機也是如此）
+        const LEVELS = [80, 100, 120, 140];
+        function targetTemp() {
+            const s = currentStep;
+            const lvl = () => LEVELS[Math.min(3, Math.floor(stepProgress() * 4))];
+            if (s === 0) return 30;
+            if (s === 1) return 80;
+            if (s === 2) return lvl();
+            if (s === 3) return 140;
+            if (s === 4) return 40;          // 降溫
+            if (s === 5) return lvl();
+            if (s === 6) return 140;
+            if (s === 7 || s === '7-1') return 125;
+            if (s === 8) return 115;
+            if (s === 9 || s === 10) return 70;
+            if (s === 11) return 33;
+            return 27.68;
+        }
+        function checkStepChange() {
+            if (currentStep !== lastStepSeen) { lastStepSeen = currentStep; stepStartTime = Date.now(); onStepChanged(); }
+        }
+        function onStepChanged() {
+            // 實機：開始校正、自動進入測試、流程結束時曲線清空重畫
+            if (currentStep === 0 || currentStep === 5 || currentStep === 11 || currentStep === -1) tempHist.length = 0;
+        }
+        function tickTemp() {
+            checkStepChange();
+            const tgt = targetTemp();
+            const k = tgt > simTemp ? 0.25 : 0.12;    // 升溫快、降溫較慢，讓每段平台明顯
+            simTemp += (tgt - simTemp) * k + (Math.random() - 0.5) * 0.6;
+            if (tgt === 27.68 && Math.abs(tgt - simTemp) < 0.5) simTemp = 27.6 + Math.random() * 0.2;
+            const recording = currentStep !== -1 && currentStep !== 11;
+            if (recording) {
+                if (tempHist.length >= HIST_MAX) tempHist.length = 0;
+                tempHist.push(simTemp);
+            }
+            document.getElementById('lcdTemp').textContent = tempAlive ? simTemp.toFixed(2) : '';
+            renderPanel();
+            drawChart();
+        }
+        function drawChart() {
+            const c = document.getElementById('tempChart');
+            const g = c.getContext('2d');
+            const W = c.width, H = c.height;
+            const L = 46, R = 12, T = 14, B = 34;
+            const pw = W - L - R, ph = H - T - B;
+            g.fillStyle = '#0b0d1c'; g.fillRect(0, 0, W, H);
+            g.fillStyle = '#1e2a6e'; g.fillRect(0, 0, L - 4, H);   // 左側刻度底色
+            g.strokeStyle = 'rgba(190,200,255,0.22)'; g.lineWidth = 1;
+            g.font = '17px Arial'; g.fillStyle = '#5a6cff';
+            g.textAlign = 'right'; g.textBaseline = 'middle';
+            for (let v = 0; v <= 160; v += 10) {
+                const y = T + ph - v / 160 * ph;
+                g.beginPath(); g.moveTo(L, y); g.lineTo(L + pw, y); g.stroke();
+                g.fillText(v, L - 8, y);
+            }
+            g.textAlign = 'center'; g.textBaseline = 'top';
+            for (let i = 1; i <= 14; i++) {
+                const x = L + (i - 0.5) / 14 * pw;
+                g.beginPath(); g.moveTo(x, T); g.lineTo(x, T + ph); g.stroke();
+                g.fillText(i, x, T + ph + 8);
+            }
+            g.strokeStyle = '#7f8fd8'; g.strokeRect(L, T, pw, ph);
+            if (!tempAlive || tempHist.length < 2) return;
+            g.strokeStyle = '#ff5a6e'; g.lineWidth = 2; g.beginPath();
+            tempHist.forEach((v, i) => {
+                const x = L + i / (HIST_MAX - 1) * pw;
+                const y = T + ph - Math.max(0, Math.min(160, v)) / 160 * ph;
+                i ? g.lineTo(x, y) : g.moveTo(x, y);
+            });
+            g.stroke();
+        }
+
+        // ---------------- 通用 ----------------
+        function checkPrerequisites() { return qrScanned && usbReady(); }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+        }
+
+        function updatePrerequisiteDisplay() {
+            const box = document.getElementById('prerequisiteCheck');
+            const usbTxt = { open: '正常（COM 已開）', enumerated: '正常（已列舉）', attached: '異常（未列舉）', none: '異常（未插線）' }[usbState];
+            box.innerHTML = `<div>前置條件檢查 / 前提条件チェック：</div>
+                <div>${qrScanned ? '✅' : '❌'} QR CODE (SN): <span id="qrStatus">${qrScanned ? '已掃描' : '未掃描'}</span></div>
+                <div>${usbReady() ? '✅' : '❌'} USB-C 連線 / USB-C接続: <span id="pcConnStatus">${usbTxt}</span></div>`;
+        }
+
+        function refreshExternalButtons() {
+            const q = document.getElementById('qrButton');
+            q.textContent = qrScanned ? '已掃描QR CODE' : '未掃描QR CODE';
+            q.classList.toggle('inactive', !qrScanned);
+            const t = document.getElementById('tempButton');
+            t.textContent = tempAlive ? '溫度讀取正常' : '溫度讀取失敗';
+            t.classList.toggle('inactive', !tempAlive);
+            document.getElementById('usbSelect').value = usbState;
+        }
+
+        function toggleQR() { qrScanned = !qrScanned; refreshExternalButtons(); updateDisplay(); }
+        function toggleTemp() { tempAlive = !tempAlive; refreshExternalButtons(); updateDisplay(); }
+        function setUsbState(v) {
+            usbState = v;
+            pcConnected = usbReady();
+            refreshExternalButtons();
+            updateDisplay();
+        }
+
+        function setExternalEnabled(on) {
+            ['qrButton', 'tempButton', 'usbSelect'].forEach(id => document.getElementById(id).disabled = !on);
+        }
+
+        function modeDisplayText() {
+            if (currentStep === '7-1') return '❌ 測試結果NG - 請選擇操作';
+            if (currentStep >= 0 && currentStep <= 3) return startedBy === 'test' ? '測試模式 / テストモード' : '校正模式 / 校正モード';
+            if (currentStep === 4) return '降溫模式 / 冷却モード';
+            if (currentStep >= 5 && currentStep <= 7) return '測試模式 / テストモード';
+            if (currentStep === 8) return '等待 PC 指令 / PCコマンド待ち';
+            if (currentStep === 9 || currentStep === 10) return '回報資料 / データ送信';
+            if (currentStep === 11) return '流程結束 / フロー終了';
+            return '待機中... / 待機中...';
+        }
+
+        function updateDisplay() {
+            checkStepChange();
+            updateDisplayCore();
+            renderPanel();
+        }
+
+        function updateDisplayCore() {
+            const deviceStatus = document.getElementById('deviceStatus');
+            const pcStatus = document.getElementById('pcStatus');
+            const progressFill = document.getElementById('progressFill');
+            const currentStatus = document.getElementById('currentStatus');
+            const asciiBtn = document.getElementById('asciiBtn');
+            const prerequisiteCheck = document.getElementById('prerequisiteCheck');
+
+            const flowActive = currentStep !== -1 && currentStep !== 11;
+            setExternalEnabled(!flowActive);
+            updatePrerequisiteDisplay();
+
+            if (!pcConnected) {
+                deviceStatus.textContent = 'USB 連線異常 / USB接続異常';
+                pcStatus.textContent = '連線異常 / 接続異常';
+                currentStatus.innerHTML = 'USB-C 連線異常，請檢查連接<br><small>USB-C接続異常、接続を確認してください</small>';
+                asciiBtn.disabled = true;
+                prerequisiteCheck.style.display = 'block';
+                return;
+            }
+
+            if (currentStep === -1) {
+                deviceStatus.textContent = '待機中... / 待機中...';
+                pcStatus.textContent = '連線正常 / 接続正常';
+                currentStatus.innerHTML = qrScanned
+                    ? '準備開始 - 選擇 CALI. 或 TEST 模式<br><small>開始準備中 - CALI.またはTESTモードを選択</small>'
+                    : '請先掃描 SN 條碼<br><small>SNバーコードをスキャンしてください</small>';
+                asciiBtn.disabled = true;
+                prerequisiteCheck.style.display = 'block';
+                return;
+            }
+
+            if (currentStep === '7-1') { updateDisplayForNG(); return; }
+
+            prerequisiteCheck.style.display = isEnded() ? 'block' : 'none';
+            deviceStatus.textContent = modeDisplayText();
+            pcStatus.textContent = steps[currentStep].pc;
+
+            if (currentStep === 11 && fromAbnormalPath) {
+                currentStatus.innerHTML = '結束校正與測試流程，無儲存數據<br><small>校正・テストフロー終了、データ保存なし</small>';
+            } else if (currentStep === 11) {
+                currentStatus.innerHTML = steps[11].status.replace('<br>', '（SN 已清除，下次需重新掃描）<br>');
+            } else {
+                currentStatus.innerHTML = steps[currentStep].status;
+            }
+
+            asciiBtn.disabled = currentStep !== 8;
+            progressFill.style.width = ((currentStep + 1) / steps.length) * 100 + '%';
+
+            for (let i = 0; i <= 11; i++) {
+                const el = document.getElementById(`step${i}`);
+                if (!el) continue;
+                el.classList.remove('active', 'completed', 'pending', 'waiting-blink');
+                if (i === currentStep) {
+                    el.classList.add('active');
+                    if (i === 8) el.classList.add('waiting-blink');
+                } else if (i < currentStep) {
+                    el.classList.add('completed');
+                } else {
+                    el.classList.add('pending');
+                }
+            }
+            handleSpecialEffects();
+        }
+
+        function handleSpecialEffects() {
+            const deviceSide = document.getElementById('deviceSide');
+            const pcSide = document.getElementById('pcSide');
+            const dataFlow = document.getElementById('dataFlow');
+            deviceSide.classList.remove('highlight');
+            pcSide.classList.remove('highlight');
+            dataFlow.classList.remove('device-to-pc', 'pc-to-device', 'notify-pc');
+            dataFlow.style.opacity = '0';
+            void dataFlow.offsetWidth;   // 讓動畫可重播
+            switch (currentStep) {
+                case 8:
+                    pcSide.classList.add('highlight');
+                    dataFlow.textContent = '⏳ 等待指令發送...';
+                    dataFlow.style.opacity = '1';
+                    break;
+                case 9:
+                    pcSide.classList.add('highlight');
+                    dataFlow.textContent = '📤 ASCII "1" 指令發送中...';
+                    dataFlow.classList.add('pc-to-device');
+                    dataFlow.style.opacity = '1';
+                    flowTimers.push(setTimeout(() => deviceSide.classList.add('highlight'), 1000));
+                    break;
+                case 10:
+                    deviceSide.classList.add('highlight');
+                    dataFlow.textContent = '📊 校正數據傳送中...';
+                    dataFlow.classList.add('device-to-pc');
+                    dataFlow.style.opacity = '1';
+                    flowTimers.push(setTimeout(() => pcSide.classList.add('highlight'), 1000));
+                    break;
+            }
+        }
+
+        function setAutoMode() {
+            autoMode = true; manualMode = false;
+            document.getElementById('autoModeBtn').classList.remove('inactive');
+            document.getElementById('manualModeBtn').classList.add('inactive');
+            document.getElementById('nextStepBtn').style.display = 'none';
+            document.getElementById('modeInstruction').textContent = '選擇演示模式後，按下治具畫面上的 CALI. 或 TEST 開始自動演示';
+        }
+        function setManualMode() {
+            autoMode = false; manualMode = true;
+            document.getElementById('autoModeBtn').classList.add('inactive');
+            document.getElementById('manualModeBtn').classList.remove('inactive');
+            document.getElementById('nextStepBtn').style.display = 'inline-block';
+            document.getElementById('modeInstruction').textContent = '選擇演示模式後，按下治具畫面上的 CALI. 或 TEST 開始，然後點擊「下一步」手動控制流程';
+        }
+
+        function hideAbnormalStep() {
+            document.getElementById('step7-1').style.display = 'none';
+            document.getElementById('arrow7-1').style.display = 'none';
+        }
+        function showAbnormalStep() {
+            document.getElementById('step7-1').style.display = 'block';
+            document.getElementById('arrow7-1').style.display = 'block';
+        }
+        function setNormalTest() {
+            testNormal = true;
+            document.getElementById('normalTestBtn').classList.remove('inactive');
+            document.getElementById('abnormalTestBtn').classList.add('inactive');
+            if (currentStep !== '7-1') hideAbnormalStep();
+        }
+        function setAbnormalTest() {
+            testNormal = false;
+            document.getElementById('normalTestBtn').classList.add('inactive');
+            document.getElementById('abnormalTestBtn').classList.remove('inactive');
+        }
+
+        function clearFlowTimers() { flowTimers.forEach(clearTimeout); flowTimers = []; }
+
+        function stopAnimation() {
+            if (animationTimer) { clearTimeout(animationTimer); animationTimer = null; }
+        }
+
+        function startAutoAnimation() {
+            if (!autoMode) return;
+            stopAnimation();
+            const schedule = () => {
+                animationTimer = setTimeout(() => {
+                    animationTimer = null;
+                    if (currentStep === 8 || currentStep === '7-1' || currentStep === -1) return;
+                    if (currentStep < steps.length - 1) { nextStep(); schedule(); }
+                }, stepMs(currentStep));
+            };
+            schedule();
+        }
+
+        function nextStep() {
+            if (currentStep === -1 || currentStep === '7-1' || currentStep >= steps.length - 1) return;
+            if (currentStep === 8) { sendAsciiCommand(); return; }
+            if (currentStep === 7 && !testNormal) {
+                currentStep = '7-1';
+                ngMode = true;            // FAIL → NG 模式
+                stopAnimation();
+                updateDisplay();
+                return;
+            }
+            currentStep++;
+            if (currentStep === 11) fromAbnormalPath = false;
+            if (currentStep === 9) qrScanned = false;   // 收到 "1" 後 CALI_UI_SetSN("") 清掉 SN
+            if (currentStep === 11) { testLabelLower = true; refreshExternalButtons(); }
+            updateDisplay();
+            if (currentStep === 8) stopAnimation();
+        }
+
+        function updateDisplayForNG() {
+            document.getElementById('deviceStatus').textContent = modeDisplayText();
+            document.getElementById('pcStatus').textContent = step7_1.pc;
+            document.getElementById('currentStatus').innerHTML = step7_1.status;
+            document.getElementById('asciiBtn').disabled = true;
+            showAbnormalStep();
+            const el = document.getElementById('step7-1');
+            el.classList.remove('pending'); el.classList.add('active');
+            for (let i = 0; i <= 7; i++) {
+                const s = document.getElementById(`step${i}`);
+                if (s) { s.classList.remove('active', 'pending'); s.classList.add('completed'); }
+            }
+        }
+
+        // ---------------- 畫面按鈕 ----------------
+        function onCaliBtn() {
+            if (currentStep === '7-1') return restartCalibration();
+            if (isRunning() && runPhase() === 'cali') return stopProcess();
+            startCalibration();
+        }
+        function onTestBtn() {
+            if (currentStep === '7-1') return endProcess();
+            if (isRunning() && runPhase() === 'test') return stopProcess();
+            startTest();
+        }
+        function onCfgBtn() {
+            if (ngMode) { ngMode = false; renderPanel(); return; }   // 只離開 NG，不離開畫面
+            showError('CFG. 設定畫面不在本演示範圍內');
+        }
+
+        function stopProcess() {
+            // 執行中按 Cali Stop / Test Stop：結束流程，按鈕還原（TEST → "Test"）
+            if (runPhase() === 'test') testLabelLower = true;
+            stopAnimation(); clearFlowTimers();
+            currentStep = -1;
+            startedBy = null;
+            resetStepList();
+            document.getElementById('progressFill').style.width = '0%';
+            updateDisplay();
+        }
+
+        function restartCalibration() {
+            if (!checkPrerequisites()) { showError('無法重新開始：請確認已掃描QR CODE且USB-C連線正常'); return; }
+            hideAbnormalStep();
+            resetStep71();
+            fromAbnormalPath = false;
+            stopAnimation(); clearFlowTimers();
+            startedBy = 'cali';
+            currentStep = 1;
+            updateDisplay();
+            if (autoMode) startAutoAnimation();
+        }
+
+        function endProcess() {
+            hideAbnormalStep();
+            resetStep71();
+            stopAnimation(); clearFlowTimers();
+            fromAbnormalPath = true;
+            currentStep = 11;
+            updateDisplay();
+        }
+
+        function sendAsciiCommand() {
+            if (currentStep !== 8) return;
+            currentStep = 9;
+            qrScanned = false;                                   // CALI_UI_SetSN("")
+            if (usbState === 'enumerated') { usbState = 'open'; refreshExternalButtons(); }   // PC 開 COM 送 "1" → USB 圖示變藍
+            updateDisplay();
+            if (autoMode) {
+                flowTimers.push(setTimeout(() => {
+                    currentStep = 10; updateDisplay();
+                    flowTimers.push(setTimeout(() => {
+                        currentStep = 11; testLabelLower = true; fromAbnormalPath = false;
+                        refreshExternalButtons(); updateDisplay();
+                    }, 3000));
+                }, 3000));
+            }
+        }
+
+        function resetStep71() {
+            const el = document.getElementById('step7-1');
+            el.classList.remove('active', 'completed'); el.classList.add('pending');
+        }
+        function resetStepList() {
+            for (let i = 0; i <= 11; i++) {
+                const el = document.getElementById(`step${i}`);
+                if (el) { el.classList.remove('active', 'completed', 'waiting-blink'); el.classList.add('pending'); }
+            }
+            resetStep71();
+            hideAbnormalStep();
+            document.getElementById('deviceSide').classList.remove('highlight');
+            document.getElementById('pcSide').classList.remove('highlight');
+            document.getElementById('dataFlow').style.opacity = '0';
+        }
+
+        function reset() {
+            // 相當於重新開啟畫面：valiable_init() 重置所有旗標；演示用：SN 恢復已掃描
+            stopAnimation(); clearFlowTimers();
+            currentStep = -1;
+            startedBy = null;
+            fromAbnormalPath = false;
+            ngMode = false;
+            testLabelLower = false;
+            qrScanned = true;
+            usbState = 'enumerated'; pcConnected = true;
+            refreshExternalButtons();
+            resetStepList();
+            document.getElementById('progressFill').style.width = '0%';
+            tempHist.length = 0;
+            updateDisplay();
+        }
+
+        function startCalibration() {
+            if (!checkPrerequisites()) { showError('無法開始校正：請確認已掃描QR CODE（SN）且USB-C已列舉'); return; }
+            stopAnimation(); clearFlowTimers();
+            fromAbnormalPath = false;
+            startedBy = 'cali';
+            resetStepList();
+            currentStep = 0;
+            updateDisplay();
+            if (autoMode) startAutoAnimation();
+        }
+
+        function startTest() {
+            if (!checkPrerequisites()) { showError('無法開始測試：請確認已掃描QR CODE（SN）且USB-C已列舉'); return; }
+            stopAnimation(); clearFlowTimers();
+            fromAbnormalPath = false;
+            startedBy = 'test';
+            resetStepList();
+            currentStep = 5;
+            updateDisplay();
+            if (autoMode) startAutoAnimation();
+        }
+
+        refreshExternalButtons();
+        updateDisplay();
+        setInterval(tickTemp, 250);
+        tickTemp();
+    </script>
+</body>
+</html>
