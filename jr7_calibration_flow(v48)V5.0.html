@@ -624,12 +624,12 @@ const ICONS = {
 
         // ---------------- PC 端 Serial 收發紀錄 ----------------
         // 依 source JR7_Communicate_CdcReport()：一行
-        //   主機名 \t 治具名 \t SN \t 平均1~4 \t t1~t4（各段加熱到穩定的時間累加）\t OK|NG|TimeOut|OVER_TEMP.
+        //   主機名,治具名,SN,平均1~4,t1~t4（各段加熱到穩定的時間累加）,OK|NG|TimeOut|OVER_TEMP.（韌體 V047 為 Tab，將改為 CSV）
         // 數值取自實機 PC 接收資料（capture 被接收端拆成兩行、少了 SN 開頭的 3，這裡已還原）
         const SERIAL_CAPTURE = {
             waiting: '[CALI] Waiting for command (send 1)',
             command: '1',
-            report: 'sumitomo PC\tjr7_cali_unit3\t' + SN_DEMO + '\t79.23\t100.28\t119.66\t139.20\t3872\t6847\t9225\t11353\tOK'
+            report: 'sumitomo PC,jr7_cali_unit3,' + SN_DEMO + ',79.23,100.28,119.66,139.20,3872,6847,9225,11353,OK'   // CSV（逗號分隔，2026-11-24 改）
         };
         function clearSerialLog() {
             document.getElementById('serialLog').innerHTML = '<div class="log-empty">（等待通訊… / 通信待ち…）</div>';
