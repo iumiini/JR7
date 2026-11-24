@@ -126,7 +126,7 @@
         .hw-led.pass.on .dot { background: #34d058; box-shadow: 0 0 8px #34d058; animation: none; }
         @keyframes ledBlink { 50% { background: #4a4a4a; box-shadow: none; } }
         .ext-row { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
-        .ext-row select { font-size: 12px; padding: 3px; border-radius: 3px; }
+        .ext-row select { font-size: 12px; padding: 3px; border-radius: 3px; max-width: 100%; }
         .legend { font-size: 11px; color: #666; background: #fff; border: 1px dashed #e0b080; border-radius: 5px; padding: 6px 8px; line-height: 1.5; }
         .legend img { width: 16px; height: 16px; vertical-align: -3px; }
 
@@ -263,9 +263,9 @@
                                 <canvas class="lcd-chart" id="tempChart" width="548" height="460"></canvas>
                             </div>
                             <div class="hw-row">
-                                <span class="hw-led pass" id="passLed"><span class="dot"></span>PASS LED</span>
-                                <span class="hw-led" id="failLed"><span class="dot"></span>失敗 LED</span>
-                                <span class="hw-led" id="buzzer"><span class="dot"></span>蜂鳴器</span>
+                                <span class="hw-led pass" id="passLed"><span class="dot"></span>PASS LED / PASSランプ</span>
+                                <span class="hw-led" id="failLed"><span class="dot"></span>失敗 LED / NGランプ</span>
+                                <span class="hw-led" id="buzzer"><span class="dot"></span>蜂鳴器 / ブザー</span>
                             </div>
                         </div>
 
@@ -293,16 +293,16 @@
                             <div class="external-controls">
                                 <div>外部狀態控制 / 外部状態制御</div>
                                 <div class="ext-row">
-                                    <button class="status-button" onclick="toggleQR()" id="qrButton">已掃描QR CODE</button>
-                                    <button class="status-button" onclick="toggleTemp()" id="tempButton">溫度讀取正常</button>
+                                    <button class="status-button" onclick="toggleQR()" id="qrButton">已掃描QR CODE / スキャン済み</button>
+                                    <button class="status-button" onclick="toggleTemp()" id="tempButton">溫度讀取正常 / 温度読取正常</button>
                                 </div>
                                 <div class="ext-row">
-                                    <label for="usbSelect">USB 狀態：</label>
+                                    <label for="usbSelect">USB 狀態 / USB状態：</label>
                                     <select id="usbSelect" onchange="setUsbState(this.value)">
-                                        <option value="open">COM port 已開啟（DTR=1）</option>
-                                        <option value="enumerated" selected>已列舉、未開 COM（DTR=0）</option>
-                                        <option value="attached">已插線、未列舉</option>
-                                        <option value="none">未插線 / 只有充電</option>
+                                        <option value="open">COM port 已開啟 / COMポート開放済み（DTR=1）</option>
+                                        <option value="enumerated" selected>已列舉、未開 COM / 列挙済み・COM未開放（DTR=0）</option>
+                                        <option value="attached">已插線、未列舉 / 接続済み・未列挙</option>
+                                        <option value="none">未插線或只有充電 / 未接続・充電のみ</option>
                                     </select>
                                 </div>
                             </div>
@@ -564,10 +564,22 @@ const ICONS = {
             document.getElementById('passLed').classList.toggle('on', passOn);
             document.getElementById('buzzer').classList.toggle('on', ngMode);
 
-            const usbText = { usb_open: '藍：COM port 已開啟', usb_enum: '黃：已列舉、COM 未開（仍算就緒）', usb_err: '紅：已插線但未列舉，不能傳資料', usb_none: '灰：未插線 / SOF 停止' }[uk];
-            const rotText = { rot_green: '綠：等 PC 送 "1"（最長 100 s）', rot_orange: '橘：CALI 執行中', rot_blue: '藍：TEST 執行中', rot_yellow: '黃：待機，溫度讀取正常', rot_grey: '灰：待機，無溫度資料' }[rk];
+            const usbText = {
+                usb_open: ['藍：COM port 已開啟', '青：COMポート開放済み'],
+                usb_enum: ['黃：已列舉、COM 未開（仍算就緒）', '黄：列挙済み・COM未開放（準備完了扱い）'],
+                usb_err:  ['紅：已插線但未列舉，不能傳資料', '赤：接続済み・未列挙、データ送受信不可'],
+                usb_none: ['灰：未插線或 SOF 停止', '灰：未接続またはSOF停止']
+            }[uk];
+            const rotText = {
+                rot_green:  ['綠：等 PC 送 "1"（最長 100 s）', '緑：PCからの "1" 待ち（最大100秒）'],
+                rot_orange: ['橘：CALI 執行中', '橙：CALI実行中'],
+                rot_blue:   ['藍：TEST 執行中', '青：TEST実行中'],
+                rot_yellow: ['黃：待機，溫度讀取正常', '黄：待機中、温度読取正常'],
+                rot_grey:   ['灰：待機，無溫度資料', '灰：待機中、温度データなし']
+            }[rk];
             document.getElementById('legend').innerHTML =
-                `<div><img src="${ICONS[uk]}"> USB 圖示 — ${usbText}</div><div><img src="${ICONS[rk]}"> 旋轉圖示 — ${rotText}</div>`;
+                `<div><img src="${ICONS[uk]}"> USB 圖示 — ${usbText[0]}<br><small>USBアイコン — ${usbText[1]}</small></div>` +
+                `<div><img src="${ICONS[rk]}"> 旋轉圖示 — ${rotText[0]}<br><small>回転アイコン — ${rotText[1]}</small></div>`;
         }
 
         // ---------------- 溫度曲線（示意：照實機照片的 80→100→120→140 階梯，數值非實測） ----------------
@@ -620,7 +632,7 @@ const ICONS = {
             report: 'sumitomo PC\tjr7_cali_unit3\t' + SN_DEMO + '\t79.23\t100.28\t119.66\t139.20\t3872\t6847\t9225\t11353\tOK'
         };
         function clearSerialLog() {
-            document.getElementById('serialLog').innerHTML = '<div class="log-empty">（等待通訊…）</div>';
+            document.getElementById('serialLog').innerHTML = '<div class="log-empty">（等待通訊… / 通信待ち…）</div>';
         }
         function serialLog(dir, text) {
             const box = document.getElementById('serialLog');
@@ -697,18 +709,18 @@ const ICONS = {
 
         function updatePrerequisiteDisplay() {
             const box = document.getElementById('prerequisiteCheck');
-            const usbTxt = { open: '正常（COM 已開）', enumerated: '正常（已列舉）', attached: '異常（未列舉）', none: '異常（未插線）' }[usbState];
+            const usbTxt = { open: '正常（COM 已開）/ 正常（COM開放）', enumerated: '正常（已列舉）/ 正常（列挙済み）', attached: '異常（未列舉）/ 異常（未列挙）', none: '異常（未插線）/ 異常（未接続）' }[usbState];
             box.innerHTML = `<div>前置條件檢查 / 前提条件チェック：</div>
-                <div>${qrScanned ? '✅' : '❌'} QR CODE (SN): <span id="qrStatus">${qrScanned ? '已掃描' : '未掃描'}</span></div>
+                <div>${qrScanned ? '✅' : '❌'} QR CODE (SN): <span id="qrStatus">${qrScanned ? '已掃描 / スキャン済み' : '未掃描 / 未スキャン'}</span></div>
                 <div>${usbReady() ? '✅' : '❌'} USB-C 連線 / USB-C接続: <span id="pcConnStatus">${usbTxt}</span></div>`;
         }
 
         function refreshExternalButtons() {
             const q = document.getElementById('qrButton');
-            q.textContent = qrScanned ? '已掃描QR CODE' : '未掃描QR CODE';
+            q.textContent = qrScanned ? '已掃描QR CODE / スキャン済み' : '未掃描QR CODE / 未スキャン';
             q.classList.toggle('inactive', !qrScanned);
             const t = document.getElementById('tempButton');
-            t.textContent = tempAlive ? '溫度讀取正常' : '溫度讀取失敗';
+            t.textContent = tempAlive ? '溫度讀取正常 / 温度読取正常' : '溫度讀取失敗 / 温度読取失敗';
             t.classList.toggle('inactive', !tempAlive);
             document.getElementById('usbSelect').value = usbState;
         }
@@ -940,7 +952,7 @@ const ICONS = {
         }
         function onCfgBtn() {
             if (ngMode) { ngMode = false; renderPanel(); return; }   // 只離開 NG，不離開畫面
-            showError('CFG. 設定畫面不在本演示範圍內');
+            showError('CFG. 設定畫面不在本演示範圍內 / CFG.設定画面はこのデモの対象外です');
         }
 
         function stopProcess() {
@@ -955,7 +967,7 @@ const ICONS = {
         }
 
         function restartCalibration() {
-            if (!checkPrerequisites()) { showError('無法重新開始：請確認已掃描QR CODE且USB-C連線正常'); return; }
+            if (!checkPrerequisites()) { showError('無法重新開始：請確認已掃描QR CODE且USB-C連線正常 / 再開始できません：QRコードのスキャンとUSB-C接続を確認してください'); return; }
             hideAbnormalStep();
             resetStep71();
             fromAbnormalPath = false;
@@ -1026,7 +1038,7 @@ const ICONS = {
         }
 
         function startCalibration() {
-            if (!checkPrerequisites()) { showError('無法開始校正：請確認已掃描QR CODE（SN）且USB-C已列舉'); return; }
+            if (!checkPrerequisites()) { showError('無法開始校正：請確認已掃描QR CODE（SN）且USB-C已列舉 / 校正を開始できません：QRコード（SN）のスキャンとUSB-Cの列挙を確認してください'); return; }
             stopAnimation(); clearFlowTimers();
             fromAbnormalPath = false;
             startedBy = 'cali';
@@ -1037,7 +1049,7 @@ const ICONS = {
         }
 
         function startTest() {
-            if (!checkPrerequisites()) { showError('無法開始測試：請確認已掃描QR CODE（SN）且USB-C已列舉'); return; }
+            if (!checkPrerequisites()) { showError('無法開始測試：請確認已掃描QR CODE（SN）且USB-C已列舉 / テストを開始できません：QRコード（SN）のスキャンとUSB-Cの列挙を確認してください'); return; }
             stopAnimation(); clearFlowTimers();
             fromAbnormalPath = false;
             startedBy = 'test';
