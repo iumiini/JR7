@@ -123,6 +123,7 @@
         .hw-led { display: inline-flex; align-items: center; gap: 5px; }
         .hw-led .dot { width: 11px; height: 11px; border-radius: 50%; background: #4a4a4a; border: 1px solid #111; }
         .hw-led.on .dot { background: #ff3b30; box-shadow: 0 0 8px #ff3b30; animation: ledBlink 1s steps(1) infinite; }
+        .hw-led.pass.on .dot { background: #34d058; box-shadow: 0 0 8px #34d058; animation: none; }
         @keyframes ledBlink { 50% { background: #4a4a4a; box-shadow: none; } }
         .ext-row { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
         .ext-row select { font-size: 12px; padding: 3px; border-radius: 3px; }
@@ -262,6 +263,7 @@
                                 <canvas class="lcd-chart" id="tempChart" width="548" height="460"></canvas>
                             </div>
                             <div class="hw-row">
+                                <span class="hw-led pass" id="passLed"><span class="dot"></span>PASS LED</span>
                                 <span class="hw-led" id="failLed"><span class="dot"></span>失敗 LED</span>
                                 <span class="hw-led" id="buzzer"><span class="dot"></span>蜂鳴器</span>
                             </div>
@@ -406,7 +408,7 @@ const ICONS = {
         let startedBy = null;         // 'cali' | 'test'：哪顆按鈕啟動的流程
         let ngMode = false;           // NG 模式：CFG. 變 NG_Off、失敗 LED + 蜂鳴器
         let testLabelLower = false;   // 停止後 TEST 還原成 "Test"（程式就是這個大小寫）
-        const SN_DEMO = '3582_5090300_2303_00000015';   // 照片中的 SN 格式
+        const SN_DEMO = '3852_5090300_2303_00000015';   // 客戶統一 SN 開頭 3852
 
         const steps = [
             { pc: "連線正常 / 接続正常", status: "用戶按下治具上的CALI.按鍵<br><small>ユーザーが治具のCALI.ボタンを押下</small>" },
@@ -433,36 +435,51 @@ const ICONS = {
             cali: ['1.576V ( 79.48)', '1.675V (100.2)', '1.762V (119.58)', '1.848V (140.18)'],
             test: ['79.23 ( 73.98~ 80.13)', '100.28 ( 93.74~100.89)', '119.66 (119.00~120.21)', '139.20 (138.37~139.65)']   // 平均值 = PC 收到的資料；範圍沿用實機照片
         };
+        // 依韌體 source V047（FramewinDLG_CALI.c JR7_StateChecker）對應到流程步驟：
+        //   0~1 CaliStart / 2 Temp0~4Complete / 3~4 CaliComplete（Cali End、降溫）/
+        //   5 TestStart → Temp0~4TestReady / 6~8 TestComplete（立刻等 PC）/ 9~11 收到 "1"
         const SCREEN_TEXT = {
             0:     { cond: 'Cali Start' },
             1:     { cond: 'Cali Start' },
             2:     { cond: 'RUN',      rows: 'cali', fill: 'progress' },
-            3:     { cond: 'RUN',      rows: 'cali', fill: 'all' },
-            4:     { cond: 'RUN',      rows: 'cali', fill: 'all' },          // 降溫中仍是 RUN + Cali Stop
-            5:     { cond: 'Testing',  rows: 'test', fill: 'progress' },     // 進測試時 MODE 欄清空再逐列出現
-            6:     { cond: 'Testing',  rows: 'test', fill: 'all' },
-            7:     { cond: 'Testing',  rows: 'test', fill: 'all' },
+            3:     { cond: 'Cali End', rows: 'cali', fill: 'all', result: 'PASS', resultColor: 'green' },   // 校正結果
+            4:     { cond: 'Cali End', rows: 'cali', fill: 'all', result: 'PASS', resultColor: 'green' },   // 降溫到 65°C 以下
+            5:     { cond: 'Testing',  rows: 'test', fill: 'progress', testStart: true },  // 先 Test Start（清空、降到 60°C 以下）再 Testing
+            6:     { cond: 'Waiting PC...', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },  // TestComplete：存檔後立刻等 PC
+            7:     { cond: 'Waiting PC...', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
             8:     { cond: 'Waiting PC...', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
             9:     { cond: 'Test End', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
             10:    { cond: 'Test End', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
             11:    { cond: 'Test End', rows: 'test', fill: 'all', result: 'PASS', resultColor: 'green' },
-            '7-1': { cond: 'Testing',  rows: 'test', fill: 'all', result: 'FAIL', resultColor: 'red' }   // FAIL 字樣依文件，未有實機照片
+            '7-1': { cond: 'Waiting PC...', rows: 'test', fill: 'all', result: 'FAIL', resultColor: 'red' }   // 異常流程維持 START/END
         };
-        // 自動演示時各步驟停留時間（ms）；校正中 / 測試中要跑完 80→100→120→140 四段
-        const STEP_MS = { 2: 12000, 4: 6000, 5: 12000 };
+        const TEST_START_FRAC = 0.2;   // 步驟 5 前 20% 顯示 Test Start
+        // 自動演示時各步驟停留時間（ms）
+        const STEP_MS = { 2: 12000, 4: 6000, 5: 14000, 6: 1500, 7: 1500 };
         const stepMs = s => STEP_MS[s] || 3000;
         let stepStartTime = Date.now();
         let lastStepSeen = null;
+        let prevStepSeen = null;
         function stepProgress() { return Math.min(1, (Date.now() - stepStartTime) / stepMs(currentStep)); }
 
         // ---------------- 狀態判斷（對照文件） ----------------
         const usbReady = () => usbState === 'open' || usbState === 'enumerated';
-        const isRunning = () => typeof currentStep === 'number' && currentStep >= 0 && currentStep <= 7;
-        const isWaitingPC = () => currentStep === 8;
+        // 階段（依 source 的 bStartBtn_State / bTestBtn_State / bWaitCmdFromCDC）
+        //   cali 0~2：Cali Stop、橘；cool 3~4：校正已結束、按鈕全停用、黃；test 5：Test Stop、藍；
+        //   wait 6~8：等 PC、三顆停用、綠
+        function phase() {
+            const s = currentStep;
+            if (typeof s !== 'number' || s < 0) return s === '7-1' ? 'ng' : 'idle';
+            if (s <= 2) return 'cali';
+            if (s <= 4) return 'cool';
+            if (s === 5) return 'test';
+            if (s <= 8) return 'wait';
+            return 'done';
+        }
+        const isRunning = () => phase() === 'cali' || phase() === 'test';
+        const isWaitingPC = () => phase() === 'wait';
         const isEnded = () => currentStep === 11;
-        // 執行階段：0~4 = CALI（含降溫），5~7 = TEST。CaliComplete 後會自動接著跑測試，
-        // 文件的「等 PC 命令」列顯示 CALI. 停用 + Test Stop，所以自動測試階段視為 TEST。
-        const runPhase = () => (typeof currentStep === 'number' && currentStep <= 4) ? 'cali' : 'test';
+        const runPhase = () => phase() === 'cali' ? 'cali' : 'test';
 
         function usbIconKey() {   // CALI_UpdateUsbIcon
             return { open: 'usb_open', enumerated: 'usb_enum', attached: 'usb_err' }[usbState] || 'usb_none';
@@ -509,6 +526,11 @@ const ICONS = {
                 setBtn(caliBtn, ph === 'cali' ? 'Cali Stop' : 'CALI.', ph === 'cali', ph === 'cali');
                 setBtn(testBtn, ph === 'test' ? 'Test Stop' : testIdle, ph === 'test', ph === 'test');
                 setBtn(cfgBtn, cfgLabel, false, ngMode);
+            } else if (phase() === 'cool') {
+                // CaliComplete 後降溫：CALI 還原成 CALI.，SN 已用掉 → 兩顆停用；流程中 CFG. 也停用
+                setBtn(caliBtn, 'CALI.', false);
+                setBtn(testBtn, testIdle, false);
+                setBtn(cfgBtn, cfgLabel, false, ngMode);
             } else if (isWaitingPC()) {
                 // 等 PC 命令：三顆全部停用（刻意的行為）
                 setBtn(caliBtn, 'CALI.', false);
@@ -523,9 +545,12 @@ const ICONS = {
 
             const t = (currentStep === 11 && fromAbnormalPath) ? {} : (SCREEN_TEXT[currentStep] || {});
             document.getElementById('lcdSN').textContent = qrScanned ? SN_DEMO : '';
-            document.getElementById('lcdCond').textContent = t.cond || '';
+            const p = stepProgress();
+            const inTestStart = t.testStart && p < TEST_START_FRAC;
+            const pp = t.testStart ? Math.max(0, (p - TEST_START_FRAC) / (1 - TEST_START_FRAC)) : p;
+            document.getElementById('lcdCond').textContent = inTestStart ? 'Test Start' : (t.cond || '');
             const vals = t.rows ? MODE_VALUES[t.rows] : [];
-            const shown = !t.rows ? 0 : (t.fill === 'progress' ? Math.floor(stepProgress() * 4 + 0.001) : 4);
+            const shown = !t.rows ? 0 : (t.fill === 'progress' ? Math.floor(pp * 4 + 0.001) : 4);
             ['lcdM80', 'lcdM100', 'lcdM120', 'lcdM140'].forEach((id, i) =>
                 document.getElementById(id).textContent = i < shown ? vals[i] : '');
             const res = document.getElementById('lcdResult');
@@ -534,6 +559,9 @@ const ICONS = {
             res.classList.toggle('green', t.resultColor === 'green');
 
             document.getElementById('failLed').classList.toggle('on', ngMode);
+            // PASS 燈：校正 PASS（CaliComplete）亮，TestStart 熄，測試 PASS（TestComplete）再亮，直到下次開始
+            const passOn = !ngMode && typeof currentStep === 'number' && ((currentStep >= 3 && currentStep <= 4) || (currentStep >= 6 && !fromAbnormalPath));
+            document.getElementById('passLed').classList.toggle('on', passOn);
             document.getElementById('buzzer').classList.toggle('on', ngMode);
 
             const usbText = { usb_open: '藍：COM port 已開啟', usb_enum: '黃：已列舉、COM 未開（仍算就緒）', usb_err: '紅：已插線但未列舉，不能傳資料', usb_none: '灰：未插線 / SOF 停止' }[uk];
@@ -545,21 +573,23 @@ const ICONS = {
         // ---------------- 溫度曲線（示意：照實機照片的 80→100→120→140 階梯，數值非實測） ----------------
         let simTemp = 27.68;
         const tempHist = [];
-        const TICK_MS = 80;      // 取樣間隔：演示是加速模擬，曲線也跟著加速
-        const HIST_MAX = 150;    // 一頁 150 點 ≈ 12 秒畫滿；畫滿就清空從左邊重畫（實機也是如此）
+        // 曲線依 source：每 33 ms 一點（GRAPH_Append_Data），YT 最多 438 點 ≈ 14.5 秒，
+        // 滿了丟掉最舊的點 → 整條往左捲動；X 軸每 30 點一格（= 1 秒），Y 軸 1°C = 2 px
+        const TICK_MS = 33;
+        const HIST_MAX = 438;
+        const Y_MAX = 169;       // 可畫高度約 338 px / 2 px 每 °C
         const LEVELS = [80, 100, 120, 140];
         function targetTemp() {
             const s = currentStep;
-            const lvl = () => LEVELS[Math.min(3, Math.floor(stepProgress() * 4))];
+            const p = stepProgress();
+            const lvl = q => LEVELS[Math.min(3, Math.floor(q * 4))];
             if (s === 0) return 30;
             if (s === 1) return 80;
-            if (s === 2) return lvl();
-            if (s === 3) return 140;
-            if (s === 4) return 40;          // 降溫
-            if (s === 5) return lvl();
-            if (s === 6) return 140;
-            if (s === 7 || s === '7-1') return 125;
-            if (s === 8) return 115;
+            if (s === 2) return lvl(p);
+            if (s === 3) return 62;          // CaliComplete：停止加熱開始降溫（< 65°C 才進 TestStart）
+            if (s === 4) return 52;
+            if (s === 5) return p < TEST_START_FRAC ? 55 : lvl((p - TEST_START_FRAC) / (1 - TEST_START_FRAC));   // TestStart 等 < 60°C
+            if (s === 6 || s === 7 || s === 8 || s === '7-1') return 110;   // 測試完成，加熱停止
             if (s === 9 || s === 10) return 70;
             if (s === 11) return 33;
             return 27.68;
@@ -568,24 +598,26 @@ const ICONS = {
             if (currentStep !== lastStepSeen) { lastStepSeen = currentStep; stepStartTime = Date.now(); onStepChanged(); }
         }
         function onStepChanged() {
-            // 實機：開始校正、自動進入測試、流程結束時曲線清空重畫
-            if (currentStep === 0 || currentStep === 5 || currentStep === 11 || currentStep === -1) tempHist.length = 0;
-            // PC 端 Serial 紀錄（依實機 PC 接收資料 capture.txt）
-            if (currentStep === -1 || (typeof currentStep === 'number' && currentStep <= 7)) clearSerialLog();
-            if (currentStep === 8) serialLog('rx', SERIAL_CAPTURE.waiting);
+            const prev = prevStepSeen; prevStepSeen = currentStep;
+            // 曲線清空時機（source）：開始 CALI/TEST、校正結束（CaliComplete）、Stop、收到 "1"
+            const fromIdle = prev === -1 || prev === 11 || prev === null;
+            if (currentStep === -1 || currentStep === 0 || currentStep === 3 || currentStep === 9 ||
+                (currentStep === 5 && fromIdle) || (currentStep === 1 && prev === '7-1')) tempHist.length = 0;
+            // PC 端 Serial 紀錄（依 source：TestComplete 送等待訊息；收到 "1" 回報一行）
+            if (currentStep === -1 || (typeof currentStep === 'number' && currentStep <= 5)) clearSerialLog();
+            if (currentStep === 6) serialLog('rx', SERIAL_CAPTURE.waiting);
             if (currentStep === 9) serialLog('tx', SERIAL_CAPTURE.command);
-            if (currentStep === 10) SERIAL_CAPTURE.result.forEach((l, i) => flowTimers.push(setTimeout(() => serialLog('rx', l), 400 + i * 700)));
+            if (currentStep === 10) flowTimers.push(setTimeout(() => serialLog('rx', SERIAL_CAPTURE.report), 400));
         }
 
         // ---------------- PC 端 Serial 收發紀錄 ----------------
-        // 內容照實機 PC 接收資料原樣（\t = Tab）；4 個溫度 = 測試平均值，其後 4 個整數與 OK 照錄
+        // 依 source JR7_Communicate_CdcReport()：一行
+        //   主機名 \t 治具名 \t SN \t 平均1~4 \t t1~t4（各段加熱到穩定的時間累加）\t OK|NG|TimeOut|OVER_TEMP.
+        // 數值取自實機 PC 接收資料（capture 被接收端拆成兩行、少了 SN 開頭的 3，這裡已還原）
         const SERIAL_CAPTURE = {
             waiting: '[CALI] Waiting for command (send 1)',
             command: '1',
-            result: [
-                'sumitomo PC\tjr7_cali_unit3\t',
-                '582_5090300_2303_00000015\t79.23\t100.28\t119.66\t139.20\t3872\t6847\t9225\t11353\tOK'
-            ]
+            report: 'sumitomo PC\tjr7_cali_unit3\t' + SN_DEMO + '\t79.23\t100.28\t119.66\t139.20\t3872\t6847\t9225\t11353\tOK'
         };
         function clearSerialLog() {
             document.getElementById('serialLog').innerHTML = '<div class="log-empty">（等待通訊…）</div>';
@@ -607,13 +639,14 @@ const ICONS = {
         function tickTemp() {
             checkStepChange();
             const tgt = targetTemp();
-            const k = tgt > simTemp ? 0.09 : 0.045;   // 升溫快、降溫較慢，讓每段平台明顯（以 80 ms 取樣換算）
-            simTemp += (tgt - simTemp) * k + (Math.random() - 0.5) * 0.5;
+            const k = tgt > simTemp ? 0.038 : 0.019;  // 升溫快、降溫較慢（以 33 ms 取樣換算）
+            simTemp += (tgt - simTemp) * k + (Math.random() - 0.5) * 0.3;
             if (tgt === 27.68 && Math.abs(tgt - simTemp) < 0.5) simTemp = 27.6 + Math.random() * 0.2;
-            const recording = currentStep !== -1 && currentStep !== 11;
+            // bSV900_UpdateEnable：從按下開始一直記錄到 TestComplete；之後凍結
+            const recording = typeof currentStep === 'number' && currentStep >= 0 && currentStep <= 5;
             if (recording) {
-                if (tempHist.length >= HIST_MAX) tempHist.length = 0;
                 tempHist.push(simTemp);
+                if (tempHist.length > HIST_MAX) tempHist.shift();   // 往左捲動
             }
             document.getElementById('lcdTemp').textContent = tempAlive ? simTemp.toFixed(2) : '';
             renderPanel();
@@ -631,13 +664,13 @@ const ICONS = {
             g.font = '17px Arial'; g.fillStyle = '#5a6cff';
             g.textAlign = 'right'; g.textBaseline = 'middle';
             for (let v = 0; v <= 160; v += 10) {
-                const y = T + ph - v / 160 * ph;
+                const y = T + ph - v / Y_MAX * ph;
                 g.beginPath(); g.moveTo(L, y); g.lineTo(L + pw, y); g.stroke();
                 g.fillText(v, L - 8, y);
             }
             g.textAlign = 'center'; g.textBaseline = 'top';
             for (let i = 1; i <= 14; i++) {
-                const x = L + (i - 0.5) / 14 * pw;
+                const x = L + (i * 30) / HIST_MAX * pw;    // 30 點 = 1 格
                 g.beginPath(); g.moveTo(x, T); g.lineTo(x, T + ph); g.stroke();
                 g.fillText(i, x, T + ph + 8);
             }
@@ -645,8 +678,8 @@ const ICONS = {
             if (!tempAlive || tempHist.length < 2) return;
             g.strokeStyle = '#ff5a6e'; g.lineWidth = 2; g.beginPath();
             tempHist.forEach((v, i) => {
-                const x = L + i / (HIST_MAX - 1) * pw;
-                const y = T + ph - Math.max(0, Math.min(160, v)) / 160 * ph;
+                const x = L + i / HIST_MAX * pw;
+                const y = T + ph - Math.max(0, Math.min(Y_MAX, v)) / Y_MAX * ph;
                 i ? g.lineTo(x, y) : g.moveTo(x, y);
             });
             g.stroke();
@@ -695,10 +728,11 @@ const ICONS = {
 
         function modeDisplayText() {
             if (currentStep === '7-1') return '❌ 測試結果NG - 請選擇操作';
-            if (currentStep >= 0 && currentStep <= 3) return startedBy === 'test' ? '測試模式 / テストモード' : '校正模式 / 校正モード';
+            if (currentStep >= 0 && currentStep <= 2) return '校正模式 / 校正モード';
+            if (currentStep === 3) return '校正結束 / 校正終了';
             if (currentStep === 4) return '降溫模式 / 冷却モード';
-            if (currentStep >= 5 && currentStep <= 7) return '測試模式 / テストモード';
-            if (currentStep === 8) return '等待 PC 指令 / PCコマンド待ち';
+            if (currentStep === 5) return '測試模式 / テストモード';
+            if (currentStep >= 6 && currentStep <= 8) return '等待 PC 指令 / PCコマンド待ち';
             if (currentStep === 9 || currentStep === 10) return '回報資料 / データ送信';
             if (currentStep === 11) return '流程結束 / フロー終了';
             return '待機中... / 待機中...';
